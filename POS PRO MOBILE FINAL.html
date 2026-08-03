@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile POS PRO - Beta911 Mart</title>
+    <!-- Pustaka Dexie.js Modern (Local-First Database Engine)[cite: 2] -->
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <!-- Library Html5-Qrcode untuk Scanner Kamera[cite: 2] -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        :root { --primary: #3498db; --success: #2ecc71; --danger: #e74c3c; --warning: #f1c40f; --dark: #2c3e50; --light: #f4f7f6; }
+        
+        body.theme-blue { --primary: #3498db; --success: #2ecc71; --danger: #e74c3c; --warning: #f1c40f; --dark: #2c3e50; --light: #f4f7f6; }
+        body.theme-green { --primary: #27ae60; --success: #2ecc71; --danger: #c0392b; --warning: #f1c40f; --dark: #1e3d2f; --light: #f0f7f4; }
+        body.theme-dark { --primary: #1abc9c; --success: #2ecc71; --danger: #e74c3c; --warning: #f39c12; --dark: #1a1a1a; --light: #2c2c2c; color: #f1f2f6; }
+        body.theme-red { --primary: #c0392b; --success: #27ae60; --danger: #e74c3c; --warning: #f39c12; --dark: #4a1515; --light: #fcf4f4; }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: var(--light); color: #333; display: flex; flex-direction: column; height: 100vh; overflow: hidden; box-sizing: border-box; }
+        
+        /* LOGIN OVERLAY[cite: 2] */
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 20px; box-sizing: border-box; }
+        .login-box { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 340px; color: #333; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .login-box h2 { margin-top: 0; text-align: center; color: var(--dark); font-size: 22px; }
+
+        /* HEADER MOBILE[cite: 2] */
+        header { background: var(--dark); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .header-brand { display: flex; align-items: center; gap: 10px; }
+        .header-logo { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; background: white; padding: 2px; display: none; }
+        header h2 { margin: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+        .header-info { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+        
+        .btn-icon { background: #34495e; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .btn-logout { background: var(--danger); }
+
+        /* MAIN LAYOUT MOBILE[cite: 2] */
+        #main-kasir { display: flex; flex-direction: column; flex: 1; padding: 10px; box-sizing: border-box; gap: 10px; overflow: hidden; margin-bottom: 75px; }
+        
+        /* SEARCH & INPUT BARCODE BARU[cite: 2] */
+        .search-container { position: relative; flex-shrink: 0; display: flex; gap: 6px; }
+        #scanKasir { flex: 1; padding: 12px 15px; border: 2px solid var(--warning); border-radius: 8px; font-weight: bold; background: white; outline: none; font-size: 16px; box-sizing: border-box; color: #333; }
+        #scanKasir:focus { border-color: var(--primary); background: #e8f4f8; }
+
+        .autocomplete-suggestions { position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #ccc; max-height: 50vh; overflow-y: auto; z-index: 9999; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: none; border-radius: 0 0 8px 8px; }
+        .suggestion-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #333; }
+        .suggestion-item:active { background: #e8f4f8; }
+
+        /* CART CARD LIST (VERTIKAL)[cite: 2] */
+        .cart-wrapper { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 10px; }
+        .cart-card { background: white; border-radius: 8px; padding: 10px 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 6px; border-left: 4px solid var(--primary); }
+        .cart-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .cart-item-title { font-weight: bold; font-size: 14px; color: var(--dark); margin: 0; }
+        .cart-item-price { font-size: 12px; color: #7f8c8d; }
+        
+        .cart-card-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+        .stepper-container { display: flex; align-items: center; background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; overflow: hidden; }
+        .stepper-btn { background: var(--primary); color: white; border: none; width: 32px; height: 32px; font-weight: bold; font-size: 16px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        .stepper-input { width: 40px; text-align: center; border: none; background: transparent; font-weight: bold; font-size: 14px; color: #333; outline: none; }
+        .cart-item-subtotal { font-weight: bold; color: var(--success); font-size: 15px; }
+        .btn-del-item { background: transparent; border: none; color: var(--danger); font-size: 16px; padding: 4px; cursor: pointer; }
+
+        /* FLOATING BOTTOM BAR[cite: 2] */
+        .floating-bottom-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 10px 15px; box-sizing: border-box; box-shadow: 0 -4px 15px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; z-index: 900; border-top: 2px solid #ecf0f1; }
+        .total-mob-label { font-size: 11px; font-weight: bold; color: #7f8c8d; margin: 0; letter-spacing: 0.5px; }
+        .total-mob-value { font-size: 1.5rem; font-weight: bold; color: var(--success); margin: 0; line-height: 1.1; }
+        .btn-pay-mob { background: var(--success); color: white; border: none; padding: 12px 25px; font-size: 1.1rem; font-weight: bold; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(46, 204, 113, 0.3); }
+
+        /* MODAL & DRAWER[cite: 2] */
+        .quick-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 12000; backdrop-filter: blur(2px); padding: 20px; box-sizing: border-box; }
+        .quick-modal-content { background: white; width: 100%; max-width: 360px; max-height: 85vh; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.4); animation: scaleIn 0.2s ease-out; }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        .quick-modal-header { background: var(--dark); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .quick-modal-body { flex: 1; padding: 15px; overflow-y: auto; background: white; box-sizing: border-box; }
+
+        /* HAMBURGER SIDEBAR DRAWER[cite: 2] */
+        #drawer-menu { position: fixed; top: 0; left: -280px; width: 280px; height: 100vh; background: var(--dark); color: white; z-index: 15000; transition: 0.3s ease; display: flex; flex-direction: column; box-shadow: 5px 0 25px rgba(0,0,0,0.5); }
+        #drawer-menu.open { left: 0; }
+        .drawer-header { padding: 20px; background: #1a252f; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #34495e; }
+        .drawer-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 10px 0; }
+        .drawer-btn { padding: 14px 20px; background: transparent; color: white; border: none; text-align: left; font-size: 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .drawer-btn:active { background: var(--primary); }
+        #drawer-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 14999; display: none; }
+
+        /* UTILS[cite: 2] */
+        .form-control { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 15px; margin-bottom: 12px; }
+        .btn { padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; font-size: 14px; }
+        .btn-primary { background: var(--primary); }
+        .btn-danger { background: var(--danger); }
+        .btn-warning { background: #f39c12; }
+        .btn-success { background: var(--success); }
+
+        /* PAYMENT GRID MOBILE[cite: 2] */
+        .payment-methods-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .method-btn { padding: 12px; border: 2px solid #ecf0f1; background: #f8f9fa; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; color: #333; text-align: center; }
+        .method-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { border: 1px solid #eee; padding: 8px; text-align: left; }
+        th { background: #f4f7f6; color: #333; }
+        
+        #alertBox { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 20000; padding: 20px; box-sizing: border-box; }
+        .alert-card { background: white; padding: 25px; border-radius: 12px; text-align: center; max-width: 320px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+
+        #struk-print-area { display: none; }
+    </style>
+</head>
+<body class="theme-blue">
+
+<!-- SUCCESS TRANSACTION MODAL & STRUK SHARE[cite: 2] -->
+<div id="successModal" class="quick-modal">
+    <div class="quick-modal-content" style="max-height: 90vh;">
+        <div class="quick-modal-header" style="background: var(--success);">
+            <h3 style="margin:0; font-size: 18px;">✅ Transaksi Berhasil</h3>
+            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 12px;" onclick="closeSuccessModal()">Tutup</button>
+        </div>
+        <div class="quick-modal-body" style="display: flex; flex-direction: column; gap: 10px;">
+            <p style="margin: 0; font-size: 12px; color: #7f8c8d; text-align: center; font-weight: bold;">PREVIEW STRUK TEKS</p>
+            <pre id="receiptPreviewText" style="background: #f8f9fa; border: 1px solid #ddd; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 11px; max-height: 220px; overflow-y: auto; text-align: left; margin: 0; white-space: pre-wrap; word-break: break-all; color: #333;"></pre>
+            
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button class="btn btn-success" style="flex: 1; padding: 10px; font-size: 12px; background: #25d366;" onclick="shareStrukWhatsApp()">📲 WA</button>
+                <button class="btn btn-warning" style="flex: 1; padding: 10px; font-size: 12px; color: #333;" onclick="copyStrukText()">📋 Salin</button>
+                <button class="btn" style="flex: 1; padding: 10px; font-size: 12px; background: #e67e22; color: white;" onclick="cetakViaBluetooth()">🖨️ Bluetooth</button>
+            </div>
+            
+            <button class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 14px; margin-top: 5px;" onclick="closeSuccessModal()">Transaksi Baru</button>
+        </div>
+    </div>
+</div>
+
+<!-- LOGIN OVERLAY[cite: 2] -->
+<div id="login-overlay">
+    <div class="login-box">
+        <h2>🔐 Mobile Login Kasir</h2>
+        <div style="margin-bottom: 12px;">
+            <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">Nama Kasir</label>
+            <select id="loginUserSelect" class="form-control" style="margin-bottom:0;"></select>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="font-size:13px; font-weight:bold; display:block; margin-bottom:4px;">Password</label>
+            <input type="password" id="loginPassword" class="form-control" placeholder="Masukkan password..." style="margin-bottom:0;" onkeydown="if(event.key === 'Enter') prosesLogin()">
+        </div>
+        <button class="btn btn-primary" style="width: 100%; padding: 14px;" onclick="prosesLogin()">MASUK APLIKASI</button>
+    </div>
+</div>
+
+<!-- HAMBURGER DRAWER MENU[cite: 2] -->
+<div id="drawer-backdrop" onclick="toggleDrawer()"></div>
+<div id="drawer-menu">
+    <div class="drawer-header">
+        <h3 style="margin:0; font-size: 16px;">⚙️ Menu Utama</h3>
+        <button class="btn btn-danger" style="padding: 4px 10px; font-size: 12px;" onclick="toggleDrawer()">Tutup</button>
+    </div>
+    <div class="drawer-body">
+        <button class="drawer-btn" onclick="toggleDrawer(); openQuickHistoryModal()">📊 Histori Penjualan</button>
+        <button class="drawer-btn" onclick="toggleDrawer(); openQuickInventoryModal()">📦 Cek Stok Barang</button>
+        <button class="drawer-btn" onclick="toggleDrawer(); openSettings()">⚙️ Pengaturan & Toko</button>
+        <button class="drawer-btn" onclick="toggleDrawer(); exportDatabaseJson()" style="background: rgba(46, 204, 113, 0.2);">💾 Export Data (Backup)</button>
+        <button class="drawer-btn" onclick="toggleDrawer(); document.getElementById('importFileJson').click()" style="background: rgba(52, 152, 219, 0.2);">📂 Import Data (Restore)</button>
+        <input type="file" id="importFileJson" style="display: none;" accept=".json" onchange="importDatabaseJson(this)">
+        
+        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin: 10px; border: 1px solid #e9ecef;">
+            <label style="font-size: 11px; font-weight: bold; color: #555; display: block; margin-bottom: 5px;">URL Google Drive (Web App):</label>
+            <input type="text" id="setCloudUrl" class="form-control" placeholder="https://script.google.com/macros/s/.../exec" style="font-size: 11px; margin-bottom: 8px;">
+            <button class="btn btn-primary" style="width: 100%; padding: 8px; font-size: 11px; margin-bottom: 6px;" onclick="simpanCloudUrl()">Simpan URL Cloud</button>
+    
+            <div style="display: flex; gap: 6px;">
+                <button class="btn btn-success" style="flex: 1; padding: 8px; font-size: 11px; background: #27ae60;" onclick="backupKeGoogleDriveMobile()">🚀 Kirim (Push)</button>
+                <button class="btn btn-primary" style="flex: 1; padding: 8px; font-size: 11px;" onclick="sinkronisasiDariCloud()">🔄 Tarik (Pull)</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- HEADER DENGAN INDIKATOR KONEKSI (LINK UP/DOWN) -->
+<header>
+    <div class="header-brand">
+        <button class="btn-icon" onclick="toggleDrawer()" style="padding: 6px 10px;">☰</button>
+        <img id="headerLogoImg" class="header-logo" alt="Logo">
+        <h2 id="displayNamaToko">Mobile POS</h2>
+    </div>
+    <div class="header-info">
+        <span id="netStatusBadge" title="Status Jaringan" style="font-size: 14px;">🟢</span>
+        <span>👤 <strong id="headerKasirNama">-</strong></span>
+        <button class="btn-icon btn-logout" onclick="logoutKasir()" style="padding: 6px 10px;" title="Keluar">🚪</button>
+    </div>
+</header>
+
+<!-- MAIN KASIR[cite: 2] -->
+<div id="main-kasir">
+    <div class="search-container">
+        <input type="text" id="scanKasir" placeholder="🔍 Cari nama barang / scan barcode..." autocomplete="off">
+        <button class="btn btn-primary" style="padding: 10px 12px; font-size: 14px;" onclick="bukaScannerKamera()" title="Scan Barcode Kamera">📷</button>
+        <div id="suggestionBox" class="autocomplete-suggestions"></div>
+    </div>
+
+    <div class="cart-wrapper" id="cartCardContainer">
+        <div style="text-align: center; color: #7f8c8d; margin-top: 40px; font-size: 14px;">Keranjang belanja masih kosong.</div>
+    </div>
+</div>
+
+<!-- FLOATING BOTTOM BAR[cite: 2] -->
+<div class="floating-bottom-bar">
+    <div>
+        <p class="total-mob-label">TOTAL BELANJA</p>
+        <p class="total-mob-value" id="totalKeranjang">Rp 0</p>
+    </div>
+    <button class="btn-pay-mob" onclick="openPaymentModal()">BAYAR ➔</button>
+</div>
+
+<!-- PAYMENT MODAL[cite: 2] -->
+<div id="paymentModal" class="quick-modal">
+    <div class="quick-modal-content" style="height: auto; max-height: 85vh;">
+        <div class="quick-modal-header" style="background: var(--success);">
+            <h3 style="margin:0; font-size: 18px;">💵 Pembayaran</h3>
+            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 12px;" onclick="closePaymentModal()">Batal</button>
+        </div>
+        <div class="quick-modal-body" style="text-align: center;">
+            <p style="margin: 0 0 2px 0; font-size: 12px; color: #7f8c8d; font-weight: bold;">TOTAL TAGIHAN</p>
+            <h2 id="paymentGrandTotal" style="margin: 0 0 15px 0; font-size: 2.2rem; color: var(--success);">Rp 0</h2>
+            
+            <div class="payment-methods-grid">
+                <button type="button" class="method-btn active" id="btnTunai" onclick="setPaymentMethod('Tunai')">Tunai</button>
+                <button type="button" class="method-btn" id="btnQRIS" onclick="setPaymentMethod('QRIS')">QRIS</button>
+                <button type="button" class="method-btn" id="btnTransfer" onclick="setPaymentMethod('Transfer')">Transfer</button>
+                <button type="button" class="method-btn" id="btnDebit" onclick="setPaymentMethod('Debit')">Debit</button>
+            </div>
+
+            <div id="areaUangTunai">
+                <input type="number" id="inputUangBayar" class="form-control" placeholder="Nominal Uang Bayar (Rp)..." style="font-size:1.4rem; text-align:center; font-weight:bold; padding: 12px;" oninput="hitungKembalianLansgung(this.value)">
+                <div id="textKembalianVisual" style="font-size:1rem; font-weight:bold; color:#7f8c8d; margin-bottom:12px;">Kembali: Uang Pas</div>
+            </div>
+
+            <button class="btn btn-success" style="width: 100%; padding: 14px; font-size: 1.1rem; margin-top: 5px;" onclick="prosesBayarSubmit()">PROSES & CETAK</button>
+        </div>
+    </div>
+</div>
+
+<!-- HISTORY MODAL[cite: 2] -->
+<div id="quickHistoryModal" class="quick-modal">
+    <div class="quick-modal-content" style="height: 85vh;">
+        <div class="quick-modal-header">
+            <h3 style="margin:0; font-size: 16px;">📊 Histori Penjualan</h3>
+            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 12px;" onclick="closeQuickHistoryModal()">Tutup</button>
+        </div>
+        <div class="quick-modal-body">
+            <div style="margin-bottom: 10px;"><input type="date" id="quickFilterTanggal" class="form-control" onchange="renderQuickLaporanFilter()"></div>
+            <h3 style="color: var(--success); margin-top: 0; font-size: 1.1rem;">Total: <span id="quickTotalPendapatan">Rp 0</span></h3>
+            <div style="overflow-x: auto;">
+                <table><thead><tr><th>No. TRX</th><th>Waktu</th><th>Total</th><th>Aksi</th></tr></thead><tbody id="quickTabelPenjualanSetting"></tbody></table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- INVENTORY MODAL[cite: 2] -->
+<div id="quickInventoryModal" class="quick-modal">
+    <div class="quick-modal-content" style="height: 85vh;">
+        <div class="quick-modal-header">
+            <h3 style="margin:0; font-size: 16px;">📦 Cek Stok Barang</h3>
+            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 12px;" onclick="closeQuickInventoryModal()">Tutup</button>
+        </div>
+        <div class="quick-modal-body">
+            <div style="margin-bottom: 10px;"><input type="text" id="quickSearchInventoryInput" class="form-control" placeholder="🔍 Cari nama/barcode..." oninput="filterQuickInventory(this.value)"></div>
+            <div style="overflow-x: auto;">
+                <table><thead><tr><th>Nama Barang</th><th>Stok</th><th>Harga</th></tr></thead><tbody id="quickTabelStokSetting"></tbody></table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SETTINGS MODAL[cite: 2] -->
+<div id="settings-modal" class="quick-modal">
+    <div class="quick-modal-content" style="height: 85vh;">
+        <div class="quick-modal-header">
+            <h3 style="margin:0; font-size: 16px;">⚙️ Pengaturan Toko</h3>
+            <button class="btn btn-danger" style="padding: 4px 10px; font-size: 12px;" onclick="closeSettings()">Tutup</button>
+        </div>
+        <div class="quick-modal-body">
+            <div class="form-group"><label>Nama Toko</label><input type="text" id="setNamaToko" class="form-control"></div>
+            <div class="form-group"><label>Alamat Toko</label><input type="text" id="setAlamatToko" class="form-control"></div>
+            <div class="form-group"><label>Pesan Footer Struk</label><input type="text" id="setFooterStruk" class="form-control"></div>
+            <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="simpanPengaturanToko()">Simpan Pengaturan</button>
+        </div>
+    </div>
+</div>
+
+<!-- ALERT BOX[cite: 2] -->
+<div id="alertBox">
+    <div class="alert-card">
+        <h3 id="alertTitle" style="margin-top:0; color:var(--dark);">Notifikasi</h3>
+        <p id="alertMessage" style="color:#555; font-size: 14px;">Pesan...</p>
+        <button class="btn btn-primary" style="width:100%; padding:10px;" onclick="closeAlert()">OK</button>
+    </div>
+</div>
+
+<!-- MODAL POP-UP KAMERA SCANNER[cite: 2] -->
+<div id="scannerModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column;">
+    <div style="background: white; width: 95%; max-width: 450px; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+        <h3 style="margin-top: 0; font-size: 18px; color: #333;">Arahkan Kamera ke Barcode</h3>
+        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Pastikan barcode terlihat jelas di dalam kotak hijau.</p>
+        <div id="reader" style="width: 100%; min-height: 350px; height: 350px !important; border-radius: 8px; overflow: hidden; background: #000; border: 2px solid #ccc;"></div>
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+             <button class="btn btn-warning" style="width: 50%; padding: 12px; font-size: 14px; color:#333;" onclick="gantiKamera()">🔄 Ganti Kamera</button>
+            <button class="btn btn-danger" style="width: 50%; padding: 12px; font-size: 14px;" onclick="tutupScannerKamera()">Tutup Kamera</button>
+        </div>
+    </div>
+</div>
+
+<div id="struk-print-area"></div>
+
+<script>
+    const db = new Dexie('POS_PRO_ModernDB');
+    db.version(1).stores({
+        inventory: 'id, barcode, nama',
+        users: 'id, nama, jabatan',
+        sales: '++id, trxNo, tanggal, kasir',
+        settings: 'key',
+        pending_trx: 'id'
+    });
+
+    let bluetoothDeviceCache = null;
+    let bluetoothCharacteristicCache = null;
+    let currentReceiptStr = "";
+
+    // --- INDIKATOR KONEKSI & BACKGROUND SYNC (TIAP 10 MENIT) ---
+    function updateNetworkStatus(status) {
+        const badge = document.getElementById('netStatusBadge');
+        if (!badge) return;
+        if (status === 'up') {
+            badge.innerText = '🟢';
+            badge.title = 'LINK UP (Terhubung)';
+        } else {
+            badge.innerText = '🔴';
+            badge.title = 'LINK DOWN (Terputus)';
+        }
+    }
+
+    window.addEventListener('online', () => updateNetworkStatus('up'));
+    window.addEventListener('offline', () => updateNetworkStatus('down'));
+
+    async function runBackgroundBatchSync() {
+        if (!navigator.onLine) {
+            updateNetworkStatus('down');
+            return;
+        }
+
+        const cloudUrl = localStorage.getItem('pos_cloud_url');
+        if (!cloudUrl) return;
+
+        try {
+            let inventory = await db.inventory.toArray();
+            let sales = await db.sales.toArray();
+            let users = await db.users.toArray();
+            let settings = await db.settings.toArray();
+
+            let payload = { inventory, sales, users, settings, isBackgroundSync: true };
+
+            await fetch(cloudUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            updateNetworkStatus('up');
+        } catch (error) {
+            console.error("Background sync gagal:", error);
+            updateNetworkStatus('down');
+        }
+    }
+
+    // FUNGSI UTAMA CETAK BLUETOOTH ESC/POS[cite: 2]
+    async function cetakViaBluetooth() {
+        if (!currentReceiptStr) {
+            showAlert('Tidak ada data struk untuk dicetak!', 'error');
+            return;
+        }
+
+        try {
+            if (!bluetoothCharacteristicCache) {
+                showAlert('Mencari printer Bluetooth... Pastikan Bluetooth HP aktif.');
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: [
+                        '000018f0-0000-1000-8000-00805f9b34fb',
+                        '0000ff00-0000-1000-8000-00805f9b34fb',
+                        '49535343-fe7d-4ae5-8fa9-9fafd205e455'
+                    ]
+                });
+
+                bluetoothDeviceCache = device;
+                const server = await device.gatt.connect();
+                let characteristic = null;
+                const services = await server.getPrimaryServices();
+                for (let s of services) {
+                    try {
+                        const characteristics = await s.getCharacteristics();
+                        for (let c of characteristics) {
+                            if (c.properties.write || c.properties.writeWithoutResponse) {
+                                characteristic = c;
+                                break;
+                            }
+                        }
+                    } catch (err) { continue; }
+                    if (characteristic) break;
+                }
+
+                if (!characteristic) throw new Error('Tidak ditemukan service printer yang cocok.');
+                bluetoothCharacteristicCache = characteristic;
+            }
+
+            let rawPrintData = "\x1B\x40" + currentReceiptStr + "\n\n\n\x1D\x56\x41\x03";
+            let encoder = new TextEncoder();
+            let bytes = encoder.encode(rawPrintData);
+            const CHUNK_SIZE = 512;
+            for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+                let chunk = bytes.slice(i, i + CHUNK_SIZE);
+                if (bluetoothCharacteristicCache.properties.writeWithoutResponse) {
+                    await bluetoothCharacteristicCache.writeValueWithoutResponse(chunk);
+                } else {
+                    await bluetoothCharacteristicCache.writeValue(chunk);
+                }
+            }
+            showAlert('Struk berhasil dikirim ke printer Bluetooth!');
+        } catch (error) {
+            console.error(error);
+            bluetoothCharacteristicCache = null;
+            bluetoothDeviceCache = null;
+            showAlert('Gagal mencetak: ' + (error.message || 'Koneksi bluetooth terputus'), 'error');
+        }
+    }
+
+    function formatRpPlain(angka) {
+        let cleanNum = Number(angka || 0).toLocaleString('id-ID');
+        return "Rp " + cleanNum;
+    }
+
+    function generateStrukText(trx) {
+        const printWidth = 32;
+        const center = (str) => {
+            if (!str) return '';
+            let pad = Math.max(0, Math.floor((printWidth - str.length) / 2));
+            return ' '.repeat(pad) + str;
+        };
+
+        let namaToko = center(tokoData.nama);
+        let alamatToko = center(tokoData.alamat);
+        let footerToko = center(tokoData.footer);
+        let itemsText = trx.items.map(i => `${i.nama}\n  ${i.qty} x ${formatRpPlain(i.harga)} = ${formatRpPlain(i.subtotal)}`).join('\n');
+        
+        return `*${namaToko}*
+${alamatToko}
+--------------------------------
+No TRX : ${trx.trxNo}
+Waktu  : ${trx.tanggal}
+Kasir  : ${trx.kasir}
+--------------------------------
+${itemsText}
+--------------------------------
+Total  : ${formatRpPlain(trx.total)}
+Bayar  : ${formatRpPlain(trx.bayar)}
+Kembali: ${formatRpPlain(trx.kembali)}
+--------------------------------
+${footerToko}`;
+    }
+
+    function shareStrukWhatsApp() {
+        if (!currentReceiptStr) return;
+        let encoded = encodeURIComponent(currentReceiptStr);
+        window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    }
+
+    function copyStrukText() {
+        if (!currentReceiptStr) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(currentReceiptStr).then(() => {
+                showAlert('Struk berhasil disalin ke clipboard!');
+            }).catch(() => fallbackCopyText(currentReceiptStr));
+        } else {
+            fallbackCopyText(currentReceiptStr);
+        }
+    }
+
+    function fallbackCopyText(text) {
+        let textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            let successful = document.execCommand('copy');
+            if (successful) showAlert('Struk berhasil disalin ke clipboard!');
+            else showAlert('Gagal menyalin teks struk', 'error');
+        } catch (err) {
+            showAlert('Gagal menyalin teks struk', 'error');
+        }
+        document.body.removeChild(textArea);
+    }
+
+    function closeSuccessModal() { document.getElementById('successModal').style.display = 'none'; }
+
+    async function getAllData(storeName) { return await db[storeName].toArray(); }
+    async function saveData(storeName, data) { return await db[storeName].put(data); }
+    async function deleteData(storeName, id) { return await db[storeName].delete(id); }
+
+    const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
+
+    let cart = []; let grandTotal = 0; let activeKasir = null;
+    let inventoryCache = []; 
+    let tokoData = { nama: "Beta911 Mart", alamat: "Jl. KB Lestari", footer: "Terima Kasih Atas Kunjungan Anda", logo: "" };
+    let currentTrxNo = ""; let selectedPaymentMethod = "Tunai"; let activeSuggestions = [];
+
+    async function loadInventoryCache() { inventoryCache = await getAllData('inventory'); }
+
+    async function generateNewTransactionNo() {
+        let settings = await getAllData('settings');
+        let countObj = settings.find(s => s.key === 'trxCounter');
+        let count = countObj ? countObj.value : 1008;
+        currentTrxNo = `TRX-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${count}`;
+    }
+    async function incrementTransactionCounter() {
+        let settings = await getAllData('settings');
+        let countObj = settings.find(s => s.key === 'trxCounter');
+        let count = countObj ? countObj.value + 1 : 1009;
+        await saveData('settings', { key: 'trxCounter', value: count }); await generateNewTransactionNo();
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        try { 
+            if (navigator.onLine) updateNetworkStatus('up'); else updateNetworkStatus('down');
+            let savedUrl = localStorage.getItem('pos_cloud_url') || '';
+            let urlEl = document.getElementById('setCloudUrl');
+            if (urlEl) urlEl.value = savedUrl;
+
+            await loadInventoryCache();
+            let settings = await getAllData('settings');
+            let t = settings.find(s => s.key === 'tokoData'); 
+            if (t) tokoData = { ...tokoData, ...(t.value || t) };
+            document.getElementById('displayNamaToko').innerText = tokoData.nama;
+            
+            await generateNewTransactionNo();
+            await populasiDropdownLogin();
+            document.getElementById('login-overlay').style.display = 'flex';
+            setupInlineSearchEvents();
+
+            // Aktifkan background sync otomatis tiap 10 menit (600000 ms)
+            setInterval(runBackgroundBatchSync, 600000);
+        } catch(e) { console.error(e); }
+    });
+
+    function toggleDrawer() {
+        const drawer = document.getElementById('drawer-menu');
+        const backdrop = document.getElementById('drawer-backdrop');
+        if (drawer.classList.contains('open')) {
+            drawer.classList.remove('open');
+            backdrop.style.display = 'none';
+        } else {
+            drawer.classList.add('open');
+            backdrop.style.display = 'block';
+        }
+    }
+
+    async function populasiDropdownLogin() {
+        let users = await getAllData('users');
+        if (users.length === 0) {
+            const defaultPassHash = await hashPassword('123');
+            await saveData('users', { id: '1', nama: 'Admin Toko', jabatan: 'Owner', password: defaultPassHash });
+            users = await getAllData('users');
+        }
+        const select = document.getElementById('loginUserSelect'); 
+        select.innerHTML = '';
+        users.forEach(u => select.innerHTML += `<option value="${u.id}">${u.nama} (${u.jabatan})</option>`);
+    }
+
+    async function hashPassword(password) {
+        const msgBuffer = new TextEncoder().encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function prosesLogin() {
+        const userId = document.getElementById('loginUserSelect').value;
+        const pass = document.getElementById('loginPassword').value;
+        const user = (await getAllData('users')).find(u => String(u.id) === String(userId));
+        if (!user) return;
+
+        const hashedInput = await hashPassword(pass);
+        if (user.password === hashedInput) {
+            activeKasir = user; 
+            document.getElementById('headerKasirNama').innerText = user.nama;
+            document.getElementById('login-overlay').style.display = 'none';
+        } else { showAlert('Password salah!', 'error'); }
+    }
+
+    function logoutKasir() {
+        if (confirm("Keluar dari akun kasir?")) {
+            activeKasir = null; cart = []; renderKeranjang();
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('login-overlay').style.display = 'flex';
+        }
+    }
+
+    function showAlert(message, type = 'success') {
+        const box = document.getElementById('alertBox');
+        document.getElementById('alertTitle').innerText = type === 'error' ? 'Perhatian' : 'Berhasil';
+        document.getElementById('alertMessage').innerText = message;
+        box.style.display = 'flex';
+    }
+    function closeAlert() { document.getElementById('alertBox').style.display = 'none'; }
+
+    function setupInlineSearchEvents() {
+        const scanInput = document.getElementById('scanKasir');
+        const suggestionBox = document.getElementById('suggestionBox');
+        if (!scanInput || !suggestionBox) return;
+
+        scanInput.addEventListener('input', function() {
+            let val = this.value.trim().toLowerCase();
+            suggestionBox.innerHTML = '';
+            if (!val) { suggestionBox.style.display = 'none'; return; }
+            
+            activeSuggestions = inventoryCache.filter(i => String(i.nama || "").toLowerCase().includes(val) || String(i.barcode || "").toLowerCase().includes(val));
+            if (activeSuggestions.length > 0) {
+                activeSuggestions.slice(0, 8).forEach(item => {
+                    let div = document.createElement('div');
+                    div.className = 'suggestion-item';
+                    div.innerHTML = `<div><strong>${item.nama}</strong><br><small>Rp ${item.harga} | Stok: ${item.stok}</small></div>`;
+                    div.onclick = () => {
+                        masukkanKeKeranjang(item, 1);
+                        scanInput.value = '';
+                        suggestionBox.style.display = 'none';
+                    };
+                    suggestionBox.appendChild(div);
+                });
+                suggestionBox.style.display = 'block';
+            } else { suggestionBox.style.display = 'none'; }
+        });
+    }
+
+    async function masukkanKeKeranjang(item, qty) {
+        let liveItem = inventoryCache.find(i => i.id === item.id) || item;
+        const cartIndex = cart.findIndex(c => c.id === liveItem.id);
+        const currentQty = cartIndex > -1 ? cart[cartIndex].qty : 0;
+        if(currentQty + qty > liveItem.stok) { showAlert(`Stok tidak cukup! (Sisa: ${liveItem.stok})`, 'error'); return; }
+        
+        if(cartIndex > -1) { 
+            cart[cartIndex].qty += qty; 
+            cart[cartIndex].subtotal = cart[cartIndex].qty * cart[cartIndex].harga; 
+        } else { 
+            cart.unshift({ id: liveItem.id, nama: liveItem.nama, harga: liveItem.harga, qty: qty, subtotal: liveItem.harga * qty, maxStok: liveItem.stok }); 
+        }
+        renderKeranjang();
+    }
+
+    function updateQtyKeranjang(index, newQty) {
+        let qty = parseInt(newQty); 
+        if(isNaN(qty) || qty <= 0) { cart.splice(index, 1); renderKeranjang(); return; }
+        if(qty > cart[index].maxStok) { showAlert(`Maksimal stok: ${cart[index].maxStok}`, 'error'); renderKeranjang(); return; }
+        cart[index].qty = qty; 
+        cart[index].subtotal = qty * cart[index].harga; 
+        renderKeranjang();
+    }
+
+    function ubahQtyStepper(index, delta) {
+        let newQty = cart[index].qty + delta;
+        updateQtyKeranjang(index, newQty);
+    }
+
+    function hapusDariKeranjang(index) { cart.splice(index, 1); renderKeranjang(); }
+
+    function renderKeranjang() {
+        const container = document.getElementById('cartCardContainer');
+        container.innerHTML = ''; 
+        grandTotal = 0;
+
+        if (cart.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: #7f8c8d; margin-top: 40px; font-size: 14px;">Keranjang belanja masih kosong.</div>';
+            document.getElementById('totalKeranjang').innerText = formatRp(0);
+            return;
+        }
+
+        cart.forEach((c, index) => {
+            grandTotal += c.subtotal;
+            container.innerHTML += `
+                <div class="cart-card">
+                    <div class="cart-card-top">
+                        <div>
+                            <p class="cart-item-title">${c.nama}</p>
+                            <span class="cart-item-price">${formatRp(c.harga)} / item</span>
+                        </div>
+                        <button class="btn-del-item" onclick="hapusDariKeranjang(${index})" title="Hapus">🗑️</button>
+                    </div>
+                    <div class="cart-card-bottom">
+                        <div class="stepper-container">
+                            <button class="stepper-btn" onclick="ubahQtyStepper(${index}, -1)">-</button>
+                            <input type="number" class="stepper-input" value="${c.qty}" onchange="updateQtyKeranjang(${index}, this.value)">
+                            <button class="stepper-btn" onclick="ubahQtyStepper(${index}, 1)">+</button>
+                        </div>
+                        <span class="cart-item-subtotal">${formatRp(c.subtotal)}</span>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('totalKeranjang').innerText = formatRp(grandTotal);
+    }
+
+    function openPaymentModal() {
+        if(cart.length === 0) { showAlert('Keranjang kosong!', 'error'); return; }
+        document.getElementById('paymentModal').style.display = 'flex';
+        document.getElementById('paymentGrandTotal').innerText = formatRp(grandTotal);
+        setPaymentMethod('Tunai');
+        document.getElementById('inputUangBayar').value = '';
+        document.getElementById('textKembalianVisual').innerText = "Kembali: Uang Pas";
+    }
+    function closePaymentModal() { document.getElementById('paymentModal').style.display = 'none'; }
+
+    function setPaymentMethod(method) {
+        selectedPaymentMethod = method;
+        ['Tunai', 'QRIS', 'Transfer', 'Debit'].forEach(m => {
+            const btn = document.getElementById('btn' + m);
+            if(btn) { if(m === method) btn.classList.add('active'); else btn.classList.remove('active'); }
+        });
+        document.getElementById('areaUangTunai').style.display = (method === 'Tunai') ? 'block' : 'none';
+    }
+
+    function hitungKembalianLansgung(val) {
+        const textKembali = document.getElementById('textKembalianVisual');
+        const bayar = val ? parseInt(val) : 0; 
+        const kembalian = bayar - grandTotal;
+        if (val === "") { textKembali.innerText = "Kembali: Uang Pas"; textKembali.style.color = '#7f8c8d'; }
+        else if (bayar >= grandTotal) { textKembali.innerText = `Kembali: ${formatRp(kembalian)}`; textKembali.style.color = 'var(--success)'; }
+        else { textKembali.innerText = "Uang Kurang!"; textKembali.style.color = 'var(--danger)'; }
+    }
+
+    async function prosesBayarSubmit() {
+        let uangBayar = grandTotal;
+        if (selectedPaymentMethod === 'Tunai') {
+            const val = document.getElementById('inputUangBayar').value; 
+            uangBayar = val ? parseInt(val) : 0;
+            if (uangBayar < grandTotal) { showAlert('Uang pembayaran kurang!', 'error'); return; }
+        }
+
+        const waktuTransaksi = new Date().toLocaleString('id-ID');
+        const namaKasirSimpan = activeKasir ? activeKasir.nama : "Kasir";
+
+        for (let c of cart) { 
+            let liveItem = inventoryCache.find(i => i.id === c.id); 
+            if(liveItem) {
+                liveItem.stok -= c.qty; 
+                await saveData('inventory', liveItem); 
+            }
+        }
+        await loadInventoryCache();
+
+        const trxData = { 
+            trxNo: currentTrxNo, 
+            tanggal: waktuTransaksi, 
+            metode: selectedPaymentMethod, 
+            kasir: namaKasirSimpan, 
+            items: [...cart], 
+            total: grandTotal, 
+            bayar: uangBayar, 
+            kembali: uangBayar - grandTotal,
+            perangkat: 'Mobile (HP)'
+        };
+
+        await saveData('sales', trxData);
+        currentReceiptStr = generateStrukText(trxData);
+        document.getElementById('receiptPreviewText').innerText = currentReceiptStr;
+
+        closePaymentModal();
+        document.getElementById('successModal').style.display = 'flex';
+
+        await incrementTransactionCounter(); 
+        cart = []; 
+        renderKeranjang(); 
+    }
+
+    function openQuickHistoryModal() { document.getElementById('quickHistoryModal').style.display = 'flex'; renderQuickLaporanFilter(); }
+    function closeQuickHistoryModal() { document.getElementById('quickHistoryModal').style.display = 'none'; }
+
+    async function renderQuickLaporanFilter() {
+        let sales = await getAllData('sales');
+        let tbody = document.getElementById('quickTabelPenjualanSetting');
+        tbody.innerHTML = ''; 
+        let total = 0;
+
+        if (sales.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #7f8c8d;">Belum ada histori transaksi.</td></tr>`;
+            document.getElementById('quickTotalPendapatan').innerText = formatRp(0);
+            return;
+        }
+
+        sales.reverse().slice(0, 20).forEach(s => {
+            total += s.total;
+            let badgeWarna = s.perangkat === 'Mobile (HP)' ? 'background:#e8f8f5; color:#16a085;' : 'background:#fef9e7; color:#d35400;';
+            tbody.innerHTML += `
+                <tr>
+                    <td>
+                        <strong>${s.trxNo}</strong><br>
+                        <small>${s.tanggal}</small><br>
+                        <span style="${badgeWarna} padding:1px 4px; border-radius:3px; font-size:10px; font-weight:bold;">${s.perangkat || 'Desktop'}</span>
+                    </td>
+                    <td>${s.kasir || '-'}</td>
+                    <td><strong>${formatRp(s.total)}</strong></td>
+                    <td>
+                        <div style="display: flex; gap: 4px;">
+                            <button class="btn btn-primary" style="padding: 4px 8px; font-size: 11px;" onclick="bukaUlangStruk('${s.trxNo}')">🖨️</button>
+                            <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="hapusTrxMobile('${s.trxNo}')">🗑️</button>
+                        </div>
+                    </td>
+                </tr>`;
+        });
+        document.getElementById('quickTotalPendapatan').innerText = formatRp(total);
+    }
+
+    async function bukaUlangStruk(trxNo) {
+        let sales = await getAllData('sales');
+        let t = sales.find(s => s.trxNo === trxNo);
+        if (t) {
+            currentReceiptStr = generateStrukText(t);
+            document.getElementById('receiptPreviewText').innerText = currentReceiptStr;
+            closeQuickHistoryModal();
+            document.getElementById('successModal').style.display = 'flex';
+        } else {
+            showAlert('Data transaksi tidak ditemukan!', 'error');
+        }
+    }
+
+    async function hapusTrxMobile(trxNo) {
+        let sales = await getAllData('sales');
+        let t = sales.find(s => s.trxNo === trxNo);
+        if(t) { await deleteData('sales', t.id); renderQuickLaporanFilter(); showAlert('Histori dihapus'); }
+    }
+
+    function openQuickInventoryModal() { document.getElementById('quickInventoryModal').style.display = 'flex'; filterQuickInventory(""); }
+    function closeQuickInventoryModal() { document.getElementById('quickInventoryModal').style.display = 'none'; }
+    function filterQuickInventory(keyword) {
+        const tbody = document.getElementById('quickTabelStokSetting');
+        tbody.innerHTML = '';
+        let kw = keyword.toLowerCase();
+        let filtered = kw ? inventoryCache.filter(i => i.nama.toLowerCase().includes(kw) || i.barcode.includes(kw)) : inventoryCache.slice(0, 30);
+        filtered.forEach(i => {
+            tbody.innerHTML += `<tr><td><strong>${i.nama}</strong><br><small>${i.barcode}</small></td><td><strong style="color:${i.stok<5?'red':'green'}">${i.stok}</strong></td><td>${formatRp(i.harga)}</td></tr>`;
+        });
+    }
+
+    function openSettings() { 
+        document.getElementById('settings-modal').style.display = 'flex';
+        document.getElementById('setNamaToko').value = tokoData.nama;
+        document.getElementById('setAlamatToko').value = tokoData.alamat;
+        document.getElementById('setFooterStruk').value = tokoData.footer;
+    }
+    function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
+    async function simpanPengaturanToko() {
+        tokoData.nama = document.getElementById('setNamaToko').value;
+        tokoData.alamat = document.getElementById('setAlamatToko').value;
+        tokoData.footer = document.getElementById('setFooterStruk').value;
+        await saveData('settings', { key: 'tokoData', value: tokoData });
+        document.getElementById('displayNamaToko').innerText = tokoData.nama;
+        closeSettings();
+        showAlert('Pengaturan disimpan!');
+    }
+
+    function simpanCloudUrl() {
+        let url = document.getElementById('setCloudUrl').value.trim();
+        localStorage.setItem('pos_cloud_url', url);
+        showAlert('URL Cloud berhasil disimpan di perangkat ini!');
+    }
+
+    function cekOtorisasiAdminMobile() {
+        if (!activeKasir) return false;
+        let jabatan = String(activeKasir.jabatan || '').toLowerCase();
+        if (jabatan.includes('kasir')) {
+            showAlert('Akses Ditolak! Level Kasir tidak diizinkan melakukan sinkronisasi cloud.', 'error');
+            return false;
+        }
+        return true;
+    }
+
+    async function backupKeGoogleDriveMobile() {
+        if (!cekOtorisasiAdminMobile()) return;
+        let cloudUrl = localStorage.getItem('pos_cloud_url');
+        if (!cloudUrl) {
+            showAlert('Masukkan URL Google Drive terlebih dahulu!', 'error');
+            return;
+        }
+
+        try {
+            showAlert('Mengirim data dari HP ke Cloud...');
+            let inventory = await db.inventory.toArray();
+            let users = await db.users.toArray();
+            let settings = await db.settings.toArray();
+            let sales = await db.sales.toArray();
+
+            let payload = { inventory, users, settings, sales };
+
+            await fetch(cloudUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            updateNetworkStatus('up');
+            showAlert('Berhasil mengirim data ke Cloud!');
+        } catch (error) {
+            console.error(error);
+            updateNetworkStatus('down');
+            showAlert('Gagal mengirim ke Cloud', 'error');
+        }
+    }
+
+    async function sinkronisasiDariCloud() {
+        if (!cekOtorisasiAdminMobile()) return;
+        let cloudUrl = localStorage.getItem('pos_cloud_url');
+        if (!cloudUrl) {
+            showAlert('Masukkan URL Google Drive terlebih dahulu!', 'error');
+            return;
+        }
+
+        try {
+            showAlert('Menghubungkan ke Google Drive...');
+            let response = await fetch(cloudUrl);
+            if (!response.ok) throw new Error('Gagal terhubung ke server cloud.');
+            
+            let data = await response.json();
+
+            if (data.sales && Array.isArray(data.sales)) {
+                for (let s of data.sales) {
+                    let existing = await db.sales.where('trxNo').equals(s.trxNo).first();
+                    if (!existing) {
+                        let { id, ...cleanData } = s;
+                        await db.sales.add(cleanData);
+                    }
+                }
+            }
+
+            if (data.inventory && Array.isArray(data.inventory)) {
+                await db.inventory.clear();
+                await db.inventory.bulkPut(data.inventory);
+            }
+            if (data.users && Array.isArray(data.users)) {
+                await db.users.clear();
+                await db.users.bulkPut(data.users);
+            }
+            if (data.settings && Array.isArray(data.settings)) {
+                await db.settings.clear();
+                await db.settings.bulkPut(data.settings);
+            }
+
+            await loadInventoryCache();
+            updateNetworkStatus('up');
+            showAlert('Sinkronisasi Sukses! Memuat ulang...');
+            setTimeout(() => location.reload(), 1500);
+
+        } catch (error) {
+            console.error(error);
+            updateNetworkStatus('down');
+            showAlert('Gagal sinkronisasi. Periksa URL Anda.', 'error');
+        }
+    }
+
+    async function exportDatabaseJson() {
+        try {
+            let allInventory = await getAllData('inventory');
+            let allUsers = await getAllData('users');
+            let allSettings = await getAllData('settings');
+            let backupData = { inventory: allInventory, users: allUsers, settings: allSettings, timestamp: new Date().toISOString() };
+            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+            let downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `backup_pos_beta911_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showAlert('Backup data berhasil diunduh!');
+        } catch(e) { showAlert('Gagal export data!', 'error'); }
+    }
+
+    async function importDatabaseJson(inputElement) {
+        let file = inputElement.files[0];
+        if (!file) return;
+        let reader = new FileReader();
+        reader.onload = async function(event) {
+            try {
+                let data = JSON.parse(event.target.result);
+                if (data.inventory && Array.isArray(data.inventory)) { await db.inventory.clear(); await db.inventory.bulkPut(data.inventory); }
+                if (data.users && Array.isArray(data.users)) { await db.users.clear(); await db.users.bulkPut(data.users); }
+                if (data.settings && Array.isArray(data.settings)) { await db.settings.clear(); await db.settings.bulkPut(data.settings); }
+                showAlert('Data berhasil dipulihkan! Halaman akan dimuat ulang...');
+                setTimeout(() => location.reload(), 1500);
+            } catch (e) { showAlert('Format file backup tidak valid!', 'error'); }
+        };
+        reader.readAsText(file);
+    }
+
+    let html5QrCode = null;
+    let currentCameraFacing = "environment"; 
+
+    async function bukaScannerKamera() {
+        let modal = document.getElementById('scannerModal');
+        modal.style.display = 'flex';
+        if (typeof Html5Qrcode === 'undefined') {
+            showAlert("Library scanner belum siap.", "error");
+            tutupScannerKamera();
+            return;
+        }
+        setTimeout(async () => {
+            try {
+                if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+                const config = { fps: 15, qrbox: { width: 280, height: 180 }, aspectRatio: 1.0 };
+                await html5QrCode.start({ facingMode: currentCameraFacing }, config, onScanSuccess, onScanFailure);
+                if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+            } catch (err) {
+                showAlert("Gagal mengakses kamera.", "error");
+                tutupScannerKamera();
+            }
+        }, 400);
+    }
+
+    async function gantiKamera() {
+        if (!html5QrCode) return;
+        try { await html5QrCode.stop(); } catch (err) {}
+        currentCameraFacing = (currentCameraFacing === "environment") ? "user" : "environment";
+        bukaScannerKamera();
+    }
+
+    function onScanSuccess(decodedText, decodedResult) {
+        if (navigator.vibrate) navigator.vibrate(200);
+        tutupScannerKamera();
+        let searchInput = document.getElementById('scanKasir'); 
+        if (searchInput) {
+            searchInput.value = decodedText;
+            let event = new Event('input', { bubbles: true });
+            searchInput.dispatchEvent(event);
+        }
+    }
+
+    function onScanFailure(error) {}
+
+    async function tutupScannerKamera() {
+        if (html5QrCode) {
+            try {
+                if (html5QrCode.isScanning) await html5QrCode.stop();
+                html5QrCode.clear();
+                html5QrCode = null;
+            } catch (err) {}
+        }
+        document.getElementById('scannerModal').style.display = 'none';
+    }
+</script>
+</body>
+</html>

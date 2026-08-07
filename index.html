@@ -306,6 +306,37 @@
 <div id="struk-print-area"></div>
 
 <script>
+async function runBackgroundBatchSync() {
+    // Jika belum ada kasir yang login, batalkan proses background sync
+    if (!activeKasir) return; 
+
+    if (!navigator.onLine) {
+        updateNetworkStatus('down');
+        return;
+    }
+
+    const cloudUrl = localStorage.getItem('pos_cloud_url');
+    if (!cloudUrl) return;
+
+    try {
+        let sales = await db.sales.toArray();
+        let pending_trx = await db.pending_trx.toArray();
+        let payload = { sales, pending_trx, isBackgroundSync: true };
+
+        await fetch(cloudUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        updateNetworkStatus('up');
+        logActivity('SYNC', 'Background auto-sync sales berhasil dikirim ke Cloud.');
+    } catch (error) {
+        console.error("Background sync gagal:", error);
+        updateNetworkStatus('down');
+    }
+}
     const db = new Dexie('POS_PRO_ModernDB');
     db.version(1).stores({
         inventory: 'id, barcode, nama',

@@ -985,18 +985,42 @@ ${footerToko}`;
                 }
             }
 
+            // --- VALIDASI KETAT PULL DATA INVENTORY, USERS, SETTINGS AGAR BEBAS KEYPATH ERROR ---
             if (data.inventory && Array.isArray(data.inventory)) {
+                let validInventory = data.inventory.map((item, index) => ({
+                    id: String(item.id || item.ID || item.barcode || `INV_${index}_${Date.now()}`),
+                    barcode: String(item.barcode || item.Barcode || ''),
+                    nama: String(item.nama || item.Nama || item.NAME || ''),
+                    harga: Number(item.harga || item.Harga || item.HARGA || 0),
+                    stok: Number(item.stok || item.Stok || item.STOK || 0)
+                })).filter(item => item.nama !== "" && item.id);
+
                 await db.inventory.clear();
-                await db.inventory.bulkPut(data.inventory);
+                if (validInventory.length > 0) await db.inventory.bulkPut(validInventory);
             }
+
             if (data.users && Array.isArray(data.users)) {
+                let validUsers = data.users.map((u, index) => ({
+                    id: String(u.id || u.ID || `USR_${index}_${Date.now()}`),
+                    nama: String(u.nama || u.Nama || ''),
+                    jabatan: String(u.jabatan || u.Jabatan || 'Staff'),
+                    password: String(u.password || u.Password || '')
+                })).filter(u => u.nama !== "" && u.id);
+
                 await db.users.clear();
-                await db.users.bulkPut(data.users);
+                if (validUsers.length > 0) await db.users.bulkPut(validUsers);
             }
+
             if (data.settings && Array.isArray(data.settings)) {
+                let validSettings = data.settings.map((s, index) => ({
+                    key: String(s.key || s.Key || `SET_${index}`),
+                    value: s.value !== undefined ? s.value : (s.Value !== undefined ? s.Value : '')
+                })).filter(s => s.key && s.key !== "undefined" && s.key !== "null" && s.key !== "");
+
                 await db.settings.clear();
-                await db.settings.bulkPut(data.settings);
+                if (validSettings.length > 0) await db.settings.bulkPut(validSettings);
             }
+            // ----------------------------------------------------------------------------------
 
             await loadInventoryCache();
             updateNetworkStatus('up');

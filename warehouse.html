@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS Gudang Mobile</title>
+    <!-- Pustaka Dexie.js untuk Database Lokal (IndexedDB) -->
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <!-- Pustaka Html5-Qrcode untuk Kamera Scanner -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        :root { --primary: #27ae60; --success: #2ecc71; --danger: #e74c3c; --warning: #f1c40f; --dark: #1e3d2f; --light: #f0f7f4; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: var(--light); color: #333; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 15px; box-sizing: border-box; }
+        .login-box { background: white; padding: 25px; border-radius: 10px; width: 100%; max-width: 340px; color: #333; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .login-box h2 { margin-top: 0; text-align: center; color: var(--dark); font-size: 20px; }
+
+        header { background: var(--dark); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+        .header-brand { display: flex; flex-direction: column; }
+        .header-brand h2 { margin: 0; font-size: 15px; }
+        .header-brand span { font-size: 10px; color: #f1c40f; font-weight: bold; letter-spacing: 0.5px; margin-top: 2px; }
+        
+        .header-info { display: flex; gap: 8px; align-items: center; font-size: 12px; }
+
+        .content-container { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; }
+        
+        .card { background: white; padding: 12px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e9ecef; }
+        .card h3 { margin-top: 0; margin-bottom: 10px; font-size: 14px; color: var(--dark); border-bottom: 2px solid var(--light); padding-bottom: 5px; }
+
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; margin-bottom: 3px; font-weight: bold; font-size: 11px; color: #555; }
+        .form-control { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 13px; }
+        
+        .btn { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; font-size: 13px; }
+        .btn-primary { background: var(--primary); }
+        .btn-danger { background: var(--danger); }
+        .btn-warning { background: #f39c12; color: #fff; }
+        .btn-success { background: var(--success); }
+        .btn-sm { padding: 4px 8px; font-size: 11px; }
+
+        table { width: 100%; border-collapse: collapse; background: white; font-size: 12px; }
+        th, td { border: 1px solid #ecf0f1; padding: 6px 8px; text-align: left; vertical-align: middle; }
+        th { background-color: var(--dark); color: white; position: sticky; top: 0; z-index: 5; font-size: 11px; }
+
+        /* Modal Kamera Scanner */
+        #scannerModal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 20000; padding: 15px; box-sizing: border-box; }
+        .scanner-container { background: white; width: 100%; max-width: 400px; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; padding: 15px; box-sizing: border-box; }
+        
+        #alertBox { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(2px); display: none; justify-content: center; align-items: center; z-index: 99999; padding: 15px; box-sizing: border-box; }
+        .alert-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center; max-width: 320px; width: 100%; border-top: 5px solid var(--success); }
+        .alert-card.error { border-top-color: var(--danger); }
+        .alert-card h3 { margin-top: 0; margin-bottom: 8px; font-size: 18px; color: var(--dark); }
+        .alert-card p { margin: 0 0 15px 0; font-size: 13px; color: #555; }
+    </style>
+</head>
+<body>
+
+<!-- OVERLAY LOGIN -->
+<div id="login-overlay">
+    <div class="login-box">
+        <h2>📦 Login Gudang PRO</h2>
+        <div class="form-group">
+            <label>Username / Nama Staff</label>
+            <input type="text" id="loginUsername" class="form-control" placeholder="Ketik username..." autocomplete="off">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="loginPassword" class="form-control" placeholder="Masukkan password..." onkeydown="if(event.key === 'Enter') prosesLogin()">
+        </div>
+        <button class="btn btn-primary" style="width: 100%; margin-top: 5px; padding: 10px;" onclick="prosesLogin()">MASUK APLIKASI</button>
+    </div>
+</div>
+
+<!-- MODAL KAMERA SCANNER -->
+<div id="scannerModal">
+    <div class="scanner-container">
+        <h3 style="margin-top:0; text-align:center; color:var(--dark);">📷 Scan Barcode Produk</h3>
+        <div id="reader" style="width: 100%; border-radius: 6px; overflow: hidden;"></div>
+        <button class="btn btn-danger" style="margin-top: 15px; width: 100%; padding: 10px;" onclick="tutupKameraScanner()">Tutup Kamera</button>
+    </div>
+</div>
+
+<!-- KOTAK NOTIFIKASI / ALERT -->
+<div id="alertBox">
+    <div id="alertCard" class="alert-card">
+        <h3 id="alertTitle">Notifikasi</h3>
+        <p id="alertMessage">Pesan sistem...</p>
+        <div id="alertCustomContent" style="display:none;"></div>
+        <div id="alertBtnContainer"><button id="alertOkBtn" class="btn btn-primary" style="padding: 8px 25px;" onclick="closeAlert()">OK</button></div>
+    </div>
+</div>
+
+<!-- HEADER UTAMA -->
+<header>
+    <div class="header-brand">
+        <h2 id="displayNamaToko">📦 Gudang Mobile</h2>
+        <span>Design by: TⒸDek</span>
+    </div>
+    <div class="header-info">
+        <span id="netStatusBadge" title="Status Jaringan">🟢</span>
+        <span>👤 <strong id="headerKasirNama">-</strong></span>
+        <button class="btn btn-danger btn-sm" onclick="logoutKasir()">🚪</button>
+        <!-- 💡 TOMBOL KEMBALI KE POS UTAMA (Hanya tampil untuk Owner & Manager) -->
+        <button id="btnPosUtama" class="btn btn-warning btn-sm" style="display: none; background: #3498db; border: none;" onclick="location.href='index.html'" title="Beralih ke Aplikasi Kasir POS Utama">🛍️ POS Utama</button>
+    </div>
+</header>
+
+<!-- DASHBOARD UTAMA -->
+<div class="content-container">
+    
+    <!-- PANEL SINKRONISASI CLOUD (KHUSUS INVENTORY) -->
+    <div class="card">
+        <h3>☁️ Sinkronisasi Cloud Gudang</h3>
+        <div class="form-group" style="margin-bottom: 6px;">
+            <label>URL Google Drive (Web App):</label>
+            <input type="text" id="setCloudUrl" class="form-control" placeholder="https://script.google.com/macros/s/.../exec" oninput="localStorage.setItem('pos_cloud_url', this.value)">
+        </div>
+        <div>
+            <button class="btn btn-success" style="width: 100%; padding: 8px; font-size: 11px;" onclick="backupKeGoogleDriveMobile()">🚀 Kirim (Push Stok ke Cloud)</button>
+        </div>
+    </div>
+
+    <!-- FORM INPUT / EDIT STOK BARANG -->
+    <div class="card">
+        <h3 id="formTitle">➕ Tambah / Edit Stok Barang</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Barcode</label>
+                <div style="display: flex; gap: 6px;">
+                    <input type="text" id="barcodeBarang" class="form-control" placeholder="Scan atau ketik barcode..." style="flex: 1;">
+                    <button type="button" class="btn btn-warning" onclick="bukaKameraScanner()" style="white-space: nowrap;">📷 Scan Kamera</button>
+                </div>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Nama Barang</label>
+                <input type="text" id="namaBarang" class="form-control" placeholder="Nama barang...">
+            </div>
+            <div class="form-group">
+                <label>Harga Jual (Rp)</label>
+                <input type="number" id="hargaBarang" class="form-control" placeholder="0">
+            </div>
+            <div class="form-group">
+                <label>Sisa Stok</label>
+                <input type="number" id="stokBarang" class="form-control" placeholder="0">
+            </div>
+        </div>
+        <div style="display: flex; gap: 6px; margin-top: 5px;">
+            <button id="btnSimpanStok" class="btn btn-primary" style="flex: 1;" onclick="simpanStok()">SIMPAN BARANG</button>
+            <button id="btnBatalEdit" class="btn btn-danger" style="display: none;" onclick="batalEdit()">BATAL</button>
+        </div>
+    </div>
+
+    <!-- DAFTAR STOK BARANG DI DATABASE -->
+    <div class="card" style="flex: 1; display: flex; flex-direction: column; min-height: 550px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h3 style="margin: 0; border: none;">📋 Database Stok (<span id="jumlahItemCount">0</span>)</h3>
+        </div>
+        <div class="form-group" style="margin-bottom: 8px;">
+            <input type="text" id="searchInventoryInput" class="form-control" placeholder="🔍 Cari nama atau barcode..." oninput="renderTabelInventory()">
+        </div>
+        <div style="flex: 1; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Barcode / Nama</th>
+                        <th style="text-align: center; width: 50px;">Stok</th>
+                        <th style="text-align: right; width: 70px;">Harga</th>
+                        <th style="text-align: center; width: 80px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelStokSetting"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- INISIALISASI DATABASE DEXIE.JS ---
+    const db = new Dexie('POS_PRO_ModernDB');
+    db.version(1).stores({
+        inventory: 'id, barcode, nama',
+        users: 'id, nama, jabatan',
+        sales: '++id, trxNo, tanggal, kasir',
+        settings: 'key',
+        pending_trx: 'id'
+    });
+
+    const DEFAULT_CLOUD_URL = "https://script.google.com/macros/s/AKfycbxu4u0SqvH7giZzYwqKT2AIRxXFb2DjOxsEBTXFLaox8437vqHWMM2DdiUZ3er1RKH-/exec";
+
+    async function getAllData(storeName) { return await db[storeName].toArray(); }
+    async function saveData(storeName, data) { return await db[storeName].put(data); }
+    async function deleteData(storeName, id) { return await db[storeName].delete(id); }
+
+    const formatRp = (angka) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
+
+    let activeKasir = null;
+    let editItemId = null;
+    let inventoryCache = [];
+    let html5QrCode = null;
+
+    async function loadInventoryCache() {
+        inventoryCache = await getAllData('inventory');
+    }
+
+    async function hashPassword(password) {
+        const msgBuffer = new TextEncoder().encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function checkAndSeedDefaultData() {
+        let users = await getAllData('users');
+        if (users.length === 0) {
+            const defaultPass = await hashPassword('123');
+            await saveData('users', { id: '1', nama: 'Administrator', jabatan: 'Administrator', password: defaultPass });
+            await saveData('users', { id: '2', nama: 'Staff Gudang', jabatan: 'Gudang', password: defaultPass });
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        await checkAndSeedDefaultData();
+        if (!localStorage.getItem('pos_cloud_url')) {
+            localStorage.setItem('pos_cloud_url', DEFAULT_CLOUD_URL);
+        }
+        let inputUrl = document.getElementById('setCloudUrl');
+        if (inputUrl) {
+            inputUrl.value = localStorage.getItem('pos_cloud_url');
+        }
+        await loadInventoryCache();
+        renderTabelInventory();
+    });
+
+    // --- FUNGSI KAMERA SCANNER ---
+    function bukaKameraScanner() {
+        const modal = document.getElementById('scannerModal');
+        modal.style.display = 'flex';
+
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader");
+        }
+
+        const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+        
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            config, 
+            (decodedText, decodedResult) => {
+                // Berhasil scan barcode
+                document.getElementById('barcodeBarang').value = decodedText;
+                tutupKameraScanner();
+                
+                // Opsional: Cek jika barcode sudah terdaftar di database untuk auto-fill nama/harga/stok
+                let found = inventoryCache.find(i => String(i.barcode) === String(decodedText));
+                if (found) {
+                    document.getElementById('namaBarang').value = found.nama || '';
+                    document.getElementById('hargaBarang').value = found.harga || 0;
+                    document.getElementById('stokBarang').value = found.stok || 0;
+                    editItemId = found.id;
+                    document.getElementById('btnSimpanStok').innerText = "UPDATE BARANG";
+                    document.getElementById('btnBatalEdit').style.display = 'inline-block';
+                    showAlert(`Barang ditemukan: ${found.nama}`);
+                } else {
+                    showAlert(`Barcode baru terbaca: ${decodedText}`);
+                }
+            },
+            (errorMessage) => {
+                // Error scanning frame (diabaikan agar scanner terus berjalan mencari fokus)
+            }
+        ).catch(err => {
+            console.error("Gagal membuka kamera scanner:", err);
+            showAlert("Gagal mengakses kamera HP. Pastikan izin kamera diaktifkan.", "error");
+            tutupKameraScanner();
+        });
+    }
+
+    function tutupKameraScanner() {
+        const modal = document.getElementById('scannerModal');
+        modal.style.display = 'none';
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().catch(err => console.error("Gagal menghentikan scanner:", err));
+        }
+    }
+
+    function updateNetworkStatus(status) {
+        const badge = document.getElementById('netStatusBadge');
+        if (!badge) return;
+        if (status === 'up') {
+            badge.innerText = '🟢';
+            badge.title = 'LINK UP (Terhubung)';
+        } else {
+            badge.innerText = '🔴';
+            badge.title = 'LINK DOWN (Terputus)';
+        }
+    }
+
+    window.addEventListener('online', () => updateNetworkStatus('up'));
+    window.addEventListener('offline', () => updateNetworkStatus('down'));
+
+    async function autoPullOnLogin() {
+        let cloudUrl = localStorage.getItem('pos_cloud_url') || DEFAULT_CLOUD_URL;
+        if (!cloudUrl || !navigator.onLine) return;
+
+        try {
+            let response = await fetch(cloudUrl);
+            if (!response.ok) return;
+            
+            let textRes = await response.text();
+            let data = JSON.parse(textRes);
+
+            if (data.inventory && Array.isArray(data.inventory)) {
+                let validInventory = data.inventory.map((item, index) => ({
+                    id: String(item.id || item.ID || item.barcode || `AUTO_${index}_${Date.now()}`),
+                    barcode: item.barcode || item.Barcode || '',
+                    nama: item.nama || item.Nama || item.NAME || '',
+                    harga: Number(item.harga || item.Harga || item.HARGA || 0),
+                    stok: Number(item.stok || item.Stok || item.STOK || 0)
+                })).filter(item => item.nama !== "");
+
+                await db.inventory.clear();
+                await db.inventory.bulkPut(validInventory);
+            }
+
+            if (data.users && Array.isArray(data.users)) {
+                let validUsers = data.users.map((u, index) => ({
+                    id: String(u.id || u.ID || (index + 1)),
+                    nama: u.nama || u.Nama || '',
+                    jabatan: u.jabatan || u.Jabatan || 'Staff',
+                    password: u.password || u.Password || ''
+                })).filter(u => u.nama !== "");
+
+                await db.users.clear();
+                await db.users.bulkPut(validUsers);
+            }
+
+            if (data.settings && Array.isArray(data.settings)) {
+                let validSettings = data.settings.filter(s => s.key);
+                await db.settings.clear();
+                await db.settings.bulkPut(validSettings);
+            }
+
+            await loadInventoryCache();
+            renderTabelInventory(); 
+            updateNetworkStatus('up');
+        } catch (error) {
+            console.error("Auto pull gagal:", error);
+            updateNetworkStatus('down');
+        }
+    }
+
+async function prosesLogin() {
+        const typedName = document.getElementById('loginUsername').value.trim();
+        const pass = document.getElementById('loginPassword').value;
+
+        if (!typedName) {
+            showAlert('Username wajib diisi!', 'error');
+            return;
+        }
+
+        let users = await getAllData('users');
+        const user = users.find(u => String(u.nama).toLowerCase() === typedName.toLowerCase());
+        
+        if (!user) {
+            showAlert('Username tidak terdaftar!', 'error');
+            return;
+        }
+
+        const hashedInput = await hashPassword(pass);
+        if (user.password === hashedInput) {
+            activeKasir = user; 
+            document.getElementById('headerKasirNama').innerText = user.nama;
+            document.getElementById('login-overlay').style.display = 'none'; 
+            
+            // 💡 CEK HAK AKSES TOMBOL POS UTAMA (Hanya Owner & Manager)
+            const jabatanLower = String(user.jabatan || '').toLowerCase();
+            const btnPosUtama = document.getElementById('btnPosUtama');
+            if (btnPosUtama) {
+                if (jabatanLower.includes('owner') || jabatanLower.includes('manager')) {
+                    btnPosUtama.style.display = 'inline-block';
+                } else {
+                    btnPosUtama.style.display = 'none';
+                }
+            }
+
+            await autoPullOnLogin();
+            renderTabelInventory();
+        } else {
+            showAlert('Password salah!', 'error'); 
+            document.getElementById('loginPassword').value = ''; 
+            document.getElementById('loginPassword').focus();
+        }
+    }
+
+    function logoutKasir() {
+        if (confirm("Keluar dari aplikasi gudang?")) {
+            activeKasir = null;
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = ''; 
+            document.getElementById('login-overlay').style.display = 'flex';
+            document.getElementById('loginUsername').focus();
+        }
+    }
+
+    function showAlert(message, type = 'success') {
+        const alertBox = document.getElementById('alertBox');
+        const alertCard = document.getElementById('alertCard');
+        alertCard.className = 'alert-card ' + (type === 'error' ? 'error' : '');
+        document.getElementById('alertTitle').innerText = type === 'error' ? '❌ Perhatian' : '✅ Berhasil';
+        document.getElementById('alertMessage').innerText = message;
+        document.getElementById('alertCustomContent').style.display = 'none';
+        document.getElementById('alertBtnContainer').style.display = 'block';
+        alertBox.style.display = 'flex';
+    }
+    function closeAlert() { document.getElementById('alertBox').style.display = 'none'; }
+
+    function cekOtorisasiAdminMobile() {
+        if (!activeKasir) return false;
+        let jabatan = String(activeKasir.jabatan || '').toLowerCase();
+        if (jabatan.includes('kasir') && !jabatan.includes('admin') && !jabatan.includes('manager') && !jabatan.includes('gudang')) {
+            showAlert('Akses Ditolak! Level Anda tidak diizinkan melakukan sinkronisasi cloud.', 'error');
+            return false;
+        }
+        return true;
+    }
+
+    async function backupKeGoogleDriveMobile() {
+        if (!cekOtorisasiAdminMobile()) return;
+
+        let cloudUrl = localStorage.getItem('pos_cloud_url') || DEFAULT_CLOUD_URL;
+        if (!cloudUrl) {
+            showAlert('Masukkan URL Google Drive terlebih dahulu!', 'error');
+            return;
+        }
+
+        try {
+            showAlert('Mengirim data stok gudang ke Cloud...');
+            
+            let inventory = await db.inventory.toArray();
+            let users = await db.users.toArray();
+            let settings = await db.settings.toArray();
+            
+            let payload = { inventory, users, settings };
+
+            await fetch(cloudUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            updateNetworkStatus('up');
+            showAlert('Berhasil mengirim data stok ke Cloud!');
+        } catch (error) {
+            console.error(error);
+            updateNetworkStatus('down');
+            showAlert('Gagal mengirim ke Cloud', 'error');
+        }
+    }
+
+    async function renderTabelInventory() {
+        const tbStok = document.getElementById('tabelStokSetting');
+        const countEl = document.getElementById('jumlahItemCount');
+        if (countEl) countEl.innerText = inventoryCache.length;
+        if (!tbStok) return;
+
+        let keyword = document.getElementById('searchInventoryInput')?.value.trim().toLowerCase() || '';
+        let rows = [];
+
+        let filteredInventory = keyword 
+            ? inventoryCache.filter(item => 
+                String(item.nama || '').toLowerCase().includes(keyword) || 
+                String(item.barcode || '').toLowerCase().includes(keyword)
+              )
+            : inventoryCache;
+
+        let displayInventory = filteredInventory.slice(0, 100);
+
+        displayInventory.forEach(item => { 
+            rows.push(`<tr>
+                <td>
+                    <strong>${item.nama}</strong><br>
+                    <small style="color:#7f8c8d; font-family:monospace;">${item.barcode||'-'}</small>
+                </td>
+                <td style="text-align: center;"><strong style="color:${item.stok < 5 ? 'var(--danger)' : 'var(--success)'};">${item.stok}</strong></td>
+                <td style="text-align: right;">${formatRp(item.harga)}</td>
+                <td style="text-align: center;">
+                    <button class="btn btn-warning btn-sm" onclick="editStok('${item.id}')">Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="hapusStok('${item.id}')">Hapus</button>
+                </td>
+            </tr>`); 
+        });
+
+        if (filteredInventory.length === 0) {
+            rows.push(`<tr><td colspan="4" style="text-align:center; color:#7f8c8d; padding: 20px;">Barang tidak ditemukan.</td></tr>`);
+        }
+
+        tbStok.innerHTML = rows.join('');
+    }
+
+    async function simpanStok() {
+        let barcode = document.getElementById('barcodeBarang').value.trim();
+        let nama = document.getElementById('namaBarang').value.trim();
+        let harga = parseInt(document.getElementById('hargaBarang').value) || 0;
+        let stok = parseInt(document.getElementById('stokBarang').value) || 0;
+
+        if(!nama) { showAlert('Nama barang wajib diisi!', 'error'); return; }
+
+        if (barcode) {
+            let duplicateBarcode = inventoryCache.find(i => 
+                i.barcode && String(i.barcode).toLowerCase() === barcode.toLowerCase() && 
+                String(i.id) !== String(editItemId)
+            );
+            if (duplicateBarcode) {
+                showAlert(`Barcode "${barcode}" sudah digunakan oleh barang: ${duplicateBarcode.nama}`, 'error');
+                return;
+            }
+        }
+
+        let duplicateName = inventoryCache.find(i => 
+            i.nama && String(i.nama).toLowerCase() === nama.toLowerCase() && 
+            String(i.id) !== String(editItemId)
+        );
+        if (duplicateName) {
+            showAlert(`Nama barang "${nama}" sudah ada di database!`, 'error');
+            return;
+        }
+
+        if(editItemId) {
+            let item = inventoryCache.find(i => String(i.id) === String(editItemId));
+            if(item) {
+                item.barcode = barcode; 
+                item.nama = nama; 
+                item.harga = harga; 
+                item.stok = stok;
+                await saveData('inventory', item);
+            }
+            editItemId = null;
+            document.getElementById('btnSimpanStok').innerText = "SIMPAN BARANG";
+            document.getElementById('btnBatalEdit').style.display = 'none';
+        } else {
+            let newItem = { 
+                id: String(Date.now()), 
+                barcode: barcode || ('BRD'+Math.floor(Math.random()*90000+10000)), 
+                nama, 
+                harga, 
+                stok 
+            };
+            await saveData('inventory', newItem);
+        }
+
+        document.getElementById('barcodeBarang').value = '';
+        document.getElementById('namaBarang').value = '';
+        document.getElementById('hargaBarang').value = '';
+        document.getElementById('stokBarang').value = '';
+        
+        await loadInventoryCache();
+        renderTabelInventory();
+        showAlert('Data stok berhasil disimpan!');
+    }
+
+    async function editStok(id) {
+        let item = inventoryCache.find(i => String(i.id) === String(id));
+        if(item) {
+            editItemId = item.id;
+            document.getElementById('barcodeBarang').value = item.barcode || '';
+            document.getElementById('namaBarang').value = item.nama || '';
+            document.getElementById('hargaBarang').value = item.harga || 0;
+            document.getElementById('stokBarang').value = item.stok || 0;
+            document.getElementById('btnSimpanStok').innerText = "UPDATE BARANG";
+            document.getElementById('btnBatalEdit').style.display = 'inline-block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+function batalEdit() {
+        editItemId = null;
+        document.getElementById('barcodeBarang').value = '';
+        document.getElementById('namaBarang').value = '';
+        document.getElementById('hargaBarang').value = '';
+        document.getElementById('stokBarang').value = '';
+        document.getElementById('btnSimpanStok').innerText = "SIMPAN BARANG";
+        document.getElementById('btnBatalEdit').style.display = 'none';
+    }
+
+    async function hapusStok(id) {
+        if(confirm("Hapus barang ini dari database gudang?")) {
+            await deleteData('inventory', String(id));
+            await loadInventoryCache();
+            renderTabelInventory();
+            showAlert('Barang berhasil dihapus!');
+        }
+    }
+</script>
+</body>
+</html>

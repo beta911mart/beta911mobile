@@ -654,22 +654,42 @@ ${footerToko}`;
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    async function prosesLogin() {
+async function prosesLogin() {
         const usernameVal = document.getElementById('loginUsernameInput').value.trim().toLowerCase();
         const pass = document.getElementById('loginPassword').value;
         if (!usernameVal) { showAlert('Masukkan username!', 'error'); return; }
 
         let users = await getAllData('users');
         const user = users.find(u => String(u.nama).toLowerCase() === usernameVal);
-        if (!user) { showAlert('Username tidak terdaftar!', 'error'); return; }
+        if (!user) { playSound('error'); showAlert('Username tidak terdaftar!', 'error'); return; }
 
         const hashedInput = await hashPassword(pass);
         if (user.password === hashedInput) {
             activeKasir = user; 
-            document.getElementById('headerKasirNama').innerText = user.nama;
-            document.getElementById('login-overlay').style.display = 'none';
-            logActivity('LOGIN', `User ${user.nama} (${user.jabatan}) berhasil login.`);
-        } else { showAlert('Password salah!', 'error'); }
+            document.getElementById('headerKasirNama').innerText = `${user.nama} (${user.jabatan})`;
+            document.getElementById('login-overlay').style.display = 'none'; 
+            document.body.style.overflow = 'auto';
+            
+            // 💡 CEK HAK AKSES TOMBOL WAREHOUSE (Hanya Owner & Manager)
+            const jabatanLower = String(user.jabatan || '').toLowerCase();
+            const btnWarehouse = document.getElementById('btnWarehouse');
+            if (btnWarehouse) {
+                if (jabatanLower.includes('owner') || jabatanLower.includes('manager')) {
+                    btnWarehouse.style.display = 'inline-block';
+                } else {
+                    btnWarehouse.style.display = 'none';
+                }
+            }
+
+            try {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {});
+                }
+            } catch(e) {}
+
+            logActivity('LOGIN', `User ${user.nama} (${user.jabatan}) berhasil login ke sistem.`);
+            playSound('success'); document.getElementById('scanKasir')?.focus();
+        } else { playSound('error'); showAlert('Password salah!', 'error'); document.getElementById('loginPassword').value = ''; document.getElementById('loginPassword').focus(); }
     }
 
     function logoutKasir() {

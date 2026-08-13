@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Futuristic Mobile POS - Beta911 Mart</title>
+    <title>Universal POS - Beta911 Mart</title>
     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
@@ -438,6 +438,7 @@ async function runBackgroundBatchSync() {
         }
     }
 
+    // Pendekatan Universal Universal ESC/POS & Plain Text untuk Printer Low-Budget
     async function cetakViaBluetooth() {
         if (!lastTrxData && !currentReceiptStr) {
             showAlert('Tidak ada data struk untuk dicetak!', 'error');
@@ -487,38 +488,8 @@ async function runBackgroundBatchSync() {
                 kembali: 0
             };
 
-            let itemsList = Array.isArray(trx.items) ? trx.items : [trx.items];
-            let itemsText = itemsList.map(i => `${i.nama}\n  ${i.qty} x ${formatRpPlain(i.harga)} = ${formatRpPlain(i.subtotal)}`).join('\n');
-
-            let escInit = "\x1B\x40";
-            let escCenter = "\x1B\x61\x01";
-            let escLeft = "\x1B\x61\x00";
-            let escBoldOn = "\x1B\x45\x01";
-            let escBoldOff = "\x1B\x45\x00";
-
-            let namaToko = tokoData.nama || "";
-            let alamatToko = tokoData.alamat || "";
-            let footerToko = tokoData.footer || "";
-            let feedCount = (tokoData.feedLines !== undefined && tokoData.feedLines !== null) ? Number(tokoData.feedLines) : 2;
-            let feedStr = "\n".repeat(feedCount);
-
-            let rawPrintData = escInit;
-            rawPrintData += escCenter + escBoldOn + namaToko + "\n" + alamatToko + "\n" + escBoldOff;
-            rawPrintData += "--------------------------------\n";
-            rawPrintData += escLeft;
-            rawPrintData += `No TRX : ${trx.trxNo}\n`;
-            rawPrintData += `Waktu  : ${trx.tanggal}\n`;
-            rawPrintData += `Kasir  : ${trx.kasir}\n`;
-            rawPrintData += "--------------------------------\n";
-            rawPrintData += itemsText + "\n";
-            rawPrintData += "--------------------------------\n";
-            rawPrintData += `Total  : ${formatRpPlain(trx.total)}\n`;
-            rawPrintData += `Bayar  : ${formatRpPlain(trx.bayar)}\n`;
-            rawPrintData += `Kembali: ${formatRpPlain(trx.kembali)}\n`;
-            rawPrintData += "--------------------------------\n";
-            rawPrintData += escCenter + footerToko + "\n" + escLeft;
-            rawPrintData += feedStr;
-            rawPrintData += "\x1D\x56\x41\x03";
+            // Menggunakan struktur data string murni yang aman bagi printer murah
+            let rawPrintData = generateUniversalPlainReceipt(trx);
 
             let encoder = new TextEncoder();
             let bytes = encoder.encode(rawPrintData);
@@ -545,7 +516,73 @@ async function runBackgroundBatchSync() {
         return "Rp " + cleanNum;
     }
 
+    // Fungsi pembuat struk dengan lebar 32 karakter dan line ending universal \r\n
+    function generateUniversalPlainReceipt(trx) {
+        const printWidth = 32;
+        const center = (str) => {
+            if (!str) return '';
+            let pad = Math.max(0, Math.floor((printWidth - str.length) / 2));
+            return ' '.repeat(pad) + str;
+        };
+
+        let namaToko = center(tokoData.nama || "Beta911 Mart");
+        let alamatToko = center(tokoData.alamat || "");
+        let footerToko = center(tokoData.footer || "Terima Kasih");
+        let divider = "-".repeat(printWidth);
+
+        let itemsList = [];
+        if (Array.isArray(trx.items)) {
+            itemsList = trx.items;
+        } else if (trx.items) {
+            itemsList = [trx.items];
+        }
+
+        let itemsFormatted = itemsList.map(i => {
+            let lineName = i.nama;
+            let detailQtyPrice = `  ${i.qty} x ${formatRpPlain(i.harga)}`;
+            let subTotalStr = formatRpPlain(i.subtotal);
+            // Menata agar subtotal rata kanan pada lebar 32 karakter
+            let spaceNeeded = printWidth - (detailQtyPrice.length + subTotalStr.length);
+            if (spaceNeeded < 1) spaceNeeded = 1;
+            let lineCalc = detailQtyPrice + ' '.repeat(spaceNeeded) + subTotalStr;
+            return `${lineName}\r\n${lineCalc}`;
+        }).join('\r\n');
+
+        let feedCount = (tokoData.feedLines !== undefined && tokoData.feedLines !== null) ? Number(tokoData.feedLines) : 2;
+        let feedStr = "\r\n".repeat(feedCount);
+
+        // Gabungkan seluruh baris dengan \r\n agar kompatibel universal dengan printer thermal murah
+        let result = 
+            "\x1B\x40" + // Inisialisasi printer aman
+            namaToko + "\r\n" +
+            (alamatToko ? alamatToko + "\r\n" : "") +
+            divider + "\r\n" +
+            `No TRX : ${trx.trxNo}\r\n` +
+            `Waktu  : ${trx.tanggal}\r\n` +
+            `Kasir  : ${trx.kasir}\r\n` +
+            divider + "\r\n" +
+            itemsFormatted + "\r\n" +
+            divider + "\r\n" +
+            padRightLeft("Total  :", formatRpPlain(trx.total), printWidth) + "\r\n" +
+            padRightLeft("Bayar  :", formatRpPlain(trx.bayar), printWidth) + "\r\n" +
+            padRightLeft("Kembali:", formatRpPlain(trx.kembali), printWidth) + "\r\n" +
+            divider + "\r\n" +
+            footerToko + "\r\n" +
+            feedStr + 
+            "\x1D\x56\x41\x03"; // Perintah potong kertas otomatis (jika didukung)
+
+        return result;
+    }
+
+    // Helper untuk merapikan teks label di kiri dan nilai di kanan secara presisi pada lebar 32 karakter
+    function padRightLeft(label, val, width) {
+        let space = width - (label.length + val.length);
+        if (space < 1) space = 1;
+        return label + ' '.repeat(space) + val;
+    }
+
     function generateStrukText(trx) {
+        // Digunakan untuk preview teks di layar aplikasi (Modal)
         const printWidth = 32;
         const center = (str) => {
             if (!str) return '';
@@ -556,6 +593,7 @@ async function runBackgroundBatchSync() {
         let namaToko = center(tokoData.nama);
         let alamatToko = center(tokoData.alamat);
         let footerToko = center(tokoData.footer);
+        let divider = "-".repeat(printWidth);
         
         let itemsList = [];
         if (Array.isArray(trx.items)) {
@@ -566,19 +604,19 @@ async function runBackgroundBatchSync() {
 
         let itemsText = itemsList.map(i => `${i.nama}\n  ${i.qty} x ${formatRpPlain(i.harga)} = ${formatRpPlain(i.subtotal)}`).join('\n');
         
-        let textResult = `*${namaToko}*
+        let textResult = `${namaToko}
 ${alamatToko}
---------------------------------
+${divider}
 No TRX : ${trx.trxNo}
 Waktu  : ${trx.tanggal}
 Kasir  : ${trx.kasir}
---------------------------------
+${divider}
 ${itemsText}
---------------------------------
+${divider}
 Total  : ${formatRpPlain(trx.total)}
 Bayar  : ${formatRpPlain(trx.bayar)}
 Kembali: ${formatRpPlain(trx.kembali)}
---------------------------------
+${divider}
 ${footerToko}`;
 
         let feedCount = (tokoData.feedLines !== undefined && tokoData.feedLines !== null) ? Number(tokoData.feedLines) : 2;

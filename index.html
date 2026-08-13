@@ -374,6 +374,7 @@ async function runBackgroundBatchSync() {
     let bluetoothDeviceCache = null;
     let bluetoothCharacteristicCache = null;
     let currentReceiptStr = "";
+    let lastTrxData = null;
 
     function updateNetworkStatus(status) {
         const badge = document.getElementById('netStatusBadge');
@@ -438,7 +439,7 @@ async function runBackgroundBatchSync() {
     }
 
     async function cetakViaBluetooth() {
-        if (!currentReceiptStr) {
+        if (!lastTrxData && !currentReceiptStr) {
             showAlert('Tidak ada data struk untuk dicetak!', 'error');
             return;
         }
@@ -476,11 +477,50 @@ async function runBackgroundBatchSync() {
                 bluetoothCharacteristicCache = characteristic;
             }
 
-            // Memasukkan line feed (baris kosong) sesuai pengaturan user di tokoData.feedLines
+            let trx = lastTrxData || {
+                trxNo: "-",
+                tanggal: new Date().toLocaleString('id-ID'),
+                kasir: activeKasir ? activeKasir.nama : "Kasir",
+                items: cart,
+                total: grandTotal,
+                bayar: grandTotal,
+                kembali: 0
+            };
+
+            let itemsList = Array.isArray(trx.items) ? trx.items : [trx.items];
+            let itemsText = itemsList.map(i => `${i.nama}\n  ${i.qty} x ${formatRpPlain(i.harga)} = ${formatRpPlain(i.subtotal)}`).join('\n');
+
+            // ESC/POS Commands: Center & Bold for Store Name and Address
+            let escInit = "\x1B\x40";
+            let escCenter = "\x1B\x61\x01";
+            let escLeft = "\x1B\x61\x00";
+            let escBoldOn = "\x1B\x45\x01";
+            let escBoldOff = "\x1B\x45\x00";
+
+            let namaToko = tokoData.nama || "";
+            let alamatToko = tokoData.alamat || "";
+            let footerToko = tokoData.footer || "";
             let feedCount = (tokoData.feedLines !== undefined && tokoData.feedLines !== null) ? Number(tokoData.feedLines) : 2;
             let feedStr = "\n".repeat(feedCount);
-            let rawPrintData = "\x1B\x40" + currentReceiptStr + feedStr + "\x1D\x56\x41\x03";
-            
+
+            let rawPrintData = escInit;
+            rawPrintData += escCenter + escBoldOn + namaToko + "\n" + alamatToko + "\n" + escBoldOff;
+            rawPrintData += "--------------------------------\n";
+            rawPrintData += escLeft;
+            rawPrintData += `No TRX : ${trx.trxNo}\n`;
+            rawPrintData += `Waktu  : ${trx.tanggal}\n`;
+            rawPrintData += `Kasir  : ${trx.kasir}\n`;
+            rawPrintData += "--------------------------------\n";
+            rawPrintData += itemsText + "\n";
+            rawPrintData += "--------------------------------\n";
+            rawPrintData += `Total  : ${formatRpPlain(trx.total)}\n`;
+            rawPrintData += `Bayar  : ${formatRpPlain(trx.bayar)}\n`;
+            rawPrintData += `Kembali: ${formatRpPlain(trx.kembali)}\n`;
+            rawPrintData += "--------------------------------\n";
+            rawPrintData += escCenter + footerToko + "\n" + escLeft;
+            rawPrintData += feedStr;
+            rawPrintData += "\x1D\x56\x41\x03"; // Cut command
+
             let encoder = new TextEncoder();
             let bytes = encoder.encode(rawPrintData);
             const CHUNK_SIZE = 512;
@@ -517,7 +557,15 @@ async function runBackgroundBatchSync() {
         let namaToko = center(tokoData.nama);
         let alamatToko = center(tokoData.alamat);
         let footerToko = center(tokoData.footer);
-        let itemsText = trx.items.map(i => `${i.nama}\n  ${i.qty} x ${formatRpPlain(i.harga)} = ${formatRpPlain(i.subtotal)}`).join('\n');
+        
+        let itemsList = [];
+        if (Array.isArray(trx.items)) {
+            itemsList = trx.items;
+        } else if (trx.items) {
+            itemsList = [trx.items];
+        }
+
+        let itemsText = itemsList.map(i => `${i.nama}\n  ${i.qty} x ${formatRpPlain(i.harga)} = ${formatRpPlain(i.subtotal)}`).join('\n');
         
         let textResult = `*${namaToko}*
 ${alamatToko}
@@ -534,7 +582,6 @@ Kembali: ${formatRpPlain(trx.kembali)}
 --------------------------------
 ${footerToko}`;
 
-        // Tambahkan baris kosong sesuai pengaturan manual untuk preview teks
         let feedCount = (tokoData.feedLines !== undefined && tokoData.feedLines !== null) ? Number(tokoData.feedLines) : 2;
         if (feedCount > 0) {
             textResult += "\n".repeat(feedCount);
@@ -870,6 +917,7 @@ ${footerToko}`;
             perangkat: 'Mobile (HP)'
         };
 
+        lastTrxData = trxData;
         await saveData('sales', trxData);
         currentReceiptStr = generateStrukText(trxData);
         document.getElementById('receiptPreviewText').innerText = currentReceiptStr;
@@ -922,6 +970,7 @@ ${footerToko}`;
         let sales = await getAllData('sales');
         let t = sales.find(s => s.trxNo === trxNo);
         if (t) {
+            lastTrxData = t;
             currentReceiptStr = generateStrukText(t);
             document.getElementById('receiptPreviewText').innerText = currentReceiptStr;
             closeQuickHistoryModal();
@@ -1157,7 +1206,7 @@ ${footerToko}`;
         let searchInput = document.getElementById('scanKasir'); 
         if (searchInput) {
             searchInput.value = decodedText;
-            let event = new Event('input', { bubbles:`true` });
+            let event = new Event('input', { bubbles: true });
             searchInput.dispatchEvent(event);
         }
     }

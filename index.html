@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mobile POS - Beta911 Mart</title>
+    <title>Futuristic Mobile POS - Beta911 Mart</title>
     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
@@ -490,7 +490,6 @@ async function runBackgroundBatchSync() {
             let itemsList = Array.isArray(trx.items) ? trx.items : [trx.items];
             let itemsText = itemsList.map(i => `${i.nama}\n  ${i.qty} x ${formatRpPlain(i.harga)} = ${formatRpPlain(i.subtotal)}`).join('\n');
 
-            // ESC/POS Commands: Center & Bold for Store Name and Address
             let escInit = "\x1B\x40";
             let escCenter = "\x1B\x61\x01";
             let escLeft = "\x1B\x61\x00";
@@ -519,7 +518,7 @@ async function runBackgroundBatchSync() {
             rawPrintData += "--------------------------------\n";
             rawPrintData += escCenter + footerToko + "\n" + escLeft;
             rawPrintData += feedStr;
-            rawPrintData += "\x1D\x56\x41\x03"; // Cut command
+            rawPrintData += "\x1D\x56\x41\x03";
 
             let encoder = new TextEncoder();
             let bytes = encoder.encode(rawPrintData);

@@ -8,7 +8,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <!-- TAMBAHAN: FontAwesome untuk Ikon Tombol Kembali -->
+    <!-- FontAwesome untuk Ikon Tombol Kembali -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
@@ -34,7 +34,7 @@
         </button>
     </div>
 
-    <!-- RESPONSIVE HEADER: flex-col on mobile, sm:flex-row for larger screens -->
+    <!-- HEADER -->
     <header class="bg-slate-800 border-b border-slate-700 px-4 py-3 flex flex-col sm:flex-row items-center justify-between sticky top-0 z-50 gap-4">
         <div class="flex items-center space-x-3 w-full sm:w-auto justify-center sm:justify-start">
             <div class="bg-indigo-600 p-2.5 rounded-xl text-white shadow-lg shadow-indigo-500/20 shrink-0">
@@ -57,17 +57,20 @@
         </div>
     </header>
 
-    <!-- RESPONSIVE PADDING & GAP -->
+    <!-- MAIN CONTENT -->
     <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 p-4 sm:p-6 max-w-[1600px] w-full mx-auto">
         
         <div class="lg:col-span-7 flex flex-col gap-4 sm:gap-6">
             
+            <!-- STEP 1 & STEP 2 CONTAINER -->
             <div class="bg-slate-800/80 backdrop-blur border border-slate-700 rounded-2xl p-4 sm:p-5 shadow-xl">
+                <!-- STEP 1: PILIH TRANSAKSI -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-slate-700">
                     <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
                         <i data-lucide="settings-2" class="w-4 h-4"></i> 1. Pilih Jenis Transaksi
                     </h2>
                     <select id="tx-type-select" onchange="changeTransactionType(this.value)" class="w-full sm:w-auto bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-sm text-emerald-400 font-bold focus:outline-none focus:border-emerald-500 cursor-pointer shadow-inner">
+                        <option value="" disabled selected>-- Pilih Transaksi --</option>
                         <option value="gambar">🖼️ Cetak Gambar Asli (Tanpa Scan AI)</option>
                         <option value="pln">⚡ PLN Prabayar (Token)</option>
                         <option value="pulsa">📱 Pulsa / Data</option>
@@ -76,35 +79,39 @@
                     </select>
                 </div>
 
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
-                        <i data-lucide="scan-text" class="w-4 h-4"></i> 2. Upload Screenshot
-                    </h2>
-                </div>
-
-                <div class="border-2 border-dashed border-slate-700 hover:border-indigo-500/50 transition rounded-xl p-6 text-center bg-slate-900/50 relative group cursor-pointer">
-                    <input type="file" id="imageInput" accept="image/*" onchange="handleImageUpload(event)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" />
-                    <div class="flex flex-col items-center justify-center space-y-2">
-                        <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-full group-hover:scale-110 transition">
-                            <i data-lucide="upload" class="w-6 h-6"></i>
-                        </div>
-                        <p class="text-xs sm:text-sm font-medium text-slate-200">Drop screenshot transaksi di sini atau <span class="text-indigo-400 underline">Browse</span></p>
-                        <p class="text-[10px] sm:text-xs text-slate-500">Mendukung tangkapan layar DANA, Flip, m-Banking, dll.</p>
+                <!-- STEP 2: UPLOAD SCREENSHOT (Awalnya Hidden) -->
+                <div id="section-step2" class="hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
+                            <i data-lucide="scan-text" class="w-4 h-4"></i> 2. Upload Screenshot
+                        </h2>
                     </div>
-                </div>
 
-                <div id="uploadStatusContainer" class="mt-4 hidden items-center gap-3 bg-slate-900 p-3 rounded-xl border border-slate-700">
-                    <img id="uploadPreviewImg" src="" alt="Uploaded receipt preview" class="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg border border-slate-700 shrink-0" />
-                    <div class="flex-1 min-w-0">
-                        <p class="text-[11px] sm:text-xs font-medium text-slate-300 truncate" id="processLabel">Memproses Gambar...</p>
-                        <p id="ocrStatusText" class="text-[10px] sm:text-[11px] text-yellow-400 flex items-center gap-1 mt-1">
-                            <i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> Mengekstrak teks, mohon tunggu...
-                        </p>
+                    <div class="border-2 border-dashed border-slate-700 hover:border-indigo-500/50 transition rounded-xl p-6 text-center bg-slate-900/50 relative group cursor-pointer">
+                        <input type="file" id="imageInput" accept="image/*" onchange="handleImageUpload(event)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" />
+                        <div class="flex flex-col items-center justify-center space-y-2">
+                            <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-full group-hover:scale-110 transition">
+                                <i data-lucide="upload" class="w-6 h-6"></i>
+                            </div>
+                            <p class="text-xs sm:text-sm font-medium text-slate-200">Drop screenshot transaksi di sini atau <span class="text-indigo-400 underline">Browse</span></p>
+                            <p class="text-[10px] sm:text-xs text-slate-500">Mendukung tangkapan layar DANA, Flip, m-Banking, dll.</p>
+                        </div>
+                    </div>
+
+                    <div id="uploadStatusContainer" class="mt-4 hidden items-center gap-3 bg-slate-900 p-3 rounded-xl border border-slate-700">
+                        <img id="uploadPreviewImg" src="" alt="Uploaded receipt preview" class="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg border border-slate-700 shrink-0" />
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[11px] sm:text-xs font-medium text-slate-300 truncate" id="processLabel">Memproses Gambar...</p>
+                            <p id="ocrStatusText" class="text-[10px] sm:text-[11px] text-yellow-400 flex items-center gap-1 mt-1">
+                                <i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> Mengekstrak teks, mohon tunggu...
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-slate-800/80 backdrop-blur border border-slate-700 rounded-2xl p-4 sm:p-5 shadow-xl flex-1 flex flex-col">
+            <!-- STEP 3: FORM EDITOR (Awalnya Hidden) -->
+            <div id="section-step3" class="hidden bg-slate-800/80 backdrop-blur border border-slate-700 rounded-2xl p-4 sm:p-5 shadow-xl flex-1 flex flex-col">
                 <div class="flex items-center justify-between mb-4 border-b border-slate-700 pb-3">
                     <h2 class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
                         <i data-lucide="edit-3" class="w-4 h-4"></i> 3. Form Editor
@@ -113,7 +120,6 @@
 
                 <div class="space-y-4 overflow-y-auto max-h-[500px] pr-1 sm:pr-2 custom-scrollbar" id="dynamic-form-container">
                     
-                    <!-- GRID RESPONSIVE: grid-cols-1 sm:grid-cols-2 -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="text-[11px] sm:text-xs text-slate-400 font-medium mb-1 block">Title / Header Struk</label>
@@ -125,7 +131,7 @@
                         </div>
                     </div>
 
-                    <div id="form-pln" class="space-y-4 border-t border-slate-700 pt-4">
+                    <div id="form-pln" class="space-y-4 border-t border-slate-700 pt-4 hidden">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="text-[11px] sm:text-xs text-slate-400 font-medium mb-1 block">Nama Pelanggan</label>
@@ -151,7 +157,6 @@
                             <input type="text" id="f-stroomToken" oninput="updateData('stroomToken', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-indigo-400 font-bold focus:outline-none" />
                         </div>
                         
-                        <!-- GRID RESPONSIVE: grid-cols-1 sm:grid-cols-3 -->
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <div>
                                 <label class="text-[11px] sm:text-xs text-slate-400 font-medium mb-1 block">RP STROOM (Rp)</label>
@@ -266,7 +271,8 @@
 
         </div>
 
-        <div class="lg:col-span-5 flex flex-col gap-4 sm:gap-6">
+        <!-- STEP 4: PREVIEW KERTAS (58mm) (Awalnya Hidden) -->
+        <div id="section-step4" class="hidden lg:col-span-5 flex-col gap-4 sm:gap-6">
             <div class="bg-slate-800/80 backdrop-blur border border-slate-700 rounded-2xl p-4 shadow-xl flex items-center justify-between">
                 <span class="text-xs sm:text-sm font-semibold uppercase tracking-wider text-indigo-400 flex items-center gap-2">
                     <i data-lucide="printer" class="w-4 h-4"></i> 4. Preview Kertas (58mm)
@@ -274,7 +280,6 @@
                 <span class="text-[10px] bg-slate-700 px-2 py-1 rounded text-slate-300">Siap Cetak</span>
             </div>
 
-            <!-- RESPONSIVE MIN-HEIGHT -->
             <div class="bg-slate-950 border border-slate-700 rounded-2xl p-4 sm:p-6 shadow-2xl flex items-center justify-center relative overflow-hidden min-h-[400px] md:min-h-[620px]">
                 <div id="printable-receipt" class="w-full max-w-[320px] bg-[#fefcf6] text-slate-800 shadow-2xl rounded-sm p-4 relative font-mono text-xs border-dashed border-2 border-slate-300 transition-all duration-300">
                 </div>
@@ -285,9 +290,9 @@
 
     <script>
         let state = {
-            transactionType: 'pln',
-            title: 'STRUK PEMBELIAN LISTRIK PRABAYAR',
-            noRef: 'TRX-' + Math.floor(Math.random() * 10000000),
+            transactionType: '',
+            title: '',
+            noRef: '',
             rpBayar: 0,
             biayaAdmin: 0,
             date: new Date().toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'}),
@@ -318,20 +323,29 @@
 
         function initApp() {
             lucide.createIcons();
-            changeTransactionType(document.getElementById('tx-type-select').value);
-            populateFormInputs();
-            renderReceipt();
         }
 
         function changeTransactionType(type) {
+            if (!type) return;
             state.transactionType = type;
-    
+            state.noRef = 'TRX-' + Math.floor(Math.random() * 10000000);
+
+            // Alur 1: Tampilkan Step 2, Sembunyikan Step 3 dan Step 4
+            document.getElementById('section-step2').classList.remove('hidden');
+            document.getElementById('section-step3').classList.add('hidden');
+            document.getElementById('section-step4').classList.add('hidden');
+            document.getElementById('section-step4').classList.remove('flex');
+
+            // Reset status unggah gambar jika tipe transaksi berubah
+            document.getElementById('uploadStatusContainer').classList.add('hidden');
+            document.getElementById('imageInput').value = '';
+
+            // Reset sub-form
             document.getElementById('form-pln').classList.add('hidden');
             document.getElementById('form-pulsa').classList.add('hidden');
             document.getElementById('form-tagihan').classList.add('hidden');
             document.getElementById('form-transfer').classList.add('hidden');
     
-            // Tampilkan/sembunyikan form pembungkus utama
             if (type !== 'gambar') {
                 document.getElementById('dynamic-form-container').style.display = 'block';
                 document.getElementById('form-' + type).classList.remove('hidden');
@@ -344,14 +358,7 @@
             if (type === 'tagihan') state.title = 'STRUK PEMBAYARAN TAGIHAN';
             if (type === 'transfer') state.title = 'BUKTI TRANSFER PUSAT';
             if (type === 'gambar') state.title = 'CETAK GAMBAR ASLI';
-
-            if (type !== 'gambar') {
-                populateFormInputs();
-                renderReceipt();
-            } else {
-                document.getElementById('printable-receipt').innerHTML = '<p class="text-center text-slate-400 py-10 font-sans">Pilih gambar/screenshot untuk dicetak...</p>';
-            }
-}
+        }
 
         function populateFormInputs() {
             document.getElementById('f-title').value = state.title;
@@ -423,12 +430,18 @@
         async function handleImageUpload(e) {
             const file = e.target.files?.[0];
             if (!file) return;
+
+            // Alur 2 ke 3: Tampilkan Step 3 (Form Editor) dan Step 4 (Preview)
+            document.getElementById('section-step3').classList.remove('hidden');
+            document.getElementById('section-step4').classList.remove('hidden');
+            document.getElementById('section-step4').classList.add('flex');
     
             document.getElementById('uploadPreviewImg').src = URL.createObjectURL(file);
             document.getElementById('uploadStatusContainer').style.display = 'flex';
+            document.getElementById('uploadStatusContainer').classList.remove('hidden');
             const statusTxt = document.getElementById('ocrStatusText');
     
-            // BLOK BARU: Bypass AI untuk cetak gambar asli
+            // Jika mode Cetak Gambar Asli
             if (state.transactionType === 'gambar') {
                 statusTxt.className = "text-[11px] text-emerald-400 flex items-center gap-1 mt-1";
                 statusTxt.innerHTML = `<i data-lucide="check-circle-2" class="w-3 h-3"></i> Gambar siap dicetak.`;
@@ -436,11 +449,10 @@
         
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    // Menyematkan efek B&W agar ramah tinta termal
                     document.getElementById('printable-receipt').innerHTML = `<img src="${event.target.result}" class="w-full h-auto" style="filter: grayscale(100%) contrast(120%);" />`;
                 };
                 reader.readAsDataURL(file);
-                return; // Hentikan fungsi di sini (AI tidak berjalan)
+                return;
             }
 
             statusTxt.className = "text-[11px] text-yellow-400 flex items-center gap-1 mt-1";
@@ -523,8 +535,10 @@
 
             } catch (error) {
                 console.error(error);
+                populateFormInputs();
+                renderReceipt();
                 statusTxt.className = "text-[11px] text-rose-400 flex items-center gap-1 mt-1";
-                statusTxt.innerHTML = `<i data-lucide="x-circle" class="w-3 h-3"></i> AI Gagal membaca.`;
+                statusTxt.innerHTML = `<i data-lucide="x-circle" class="w-3 h-3"></i> AI Gagal membaca teks, silakan isi manual.`;
                 lucide.createIcons();
             }
         }
@@ -571,7 +585,6 @@
                     </div>
                 `;
             } 
-            
             else if (state.transactionType === 'pulsa') {
                 html += `
                     <div class="space-y-1 text-[11px] pb-2 border-b border-dashed border-slate-400 pt-1 mt-2">
@@ -599,7 +612,6 @@
                     </div>
                 `;
             }
-
             else if (state.transactionType === 'tagihan') {
                 html += `
                     <div class="space-y-1 text-[11px] pb-2 border-b border-dashed border-slate-400 pt-1 mt-2">
@@ -635,7 +647,6 @@
                     </div>
                 `;
             }
-
             else if (state.transactionType === 'transfer') {
                 html += `
                     <div class="space-y-1 text-[11px] pb-2 border-b border-dashed border-slate-400 pt-1 mt-2">
@@ -694,236 +705,214 @@
             link.click();
         }
 
-// Helper: Memformat teks rata kiri & kanan (Maks 32 karakter untuk 58mm)
-function formatLR(left, right) {
-    const maxLen = 32;
-    const strLeft = String(left);
-    const strRight = String(right);
-    const spaceCount = maxLen - strLeft.length - strRight.length;
-    if (spaceCount <= 0) return strLeft.substring(0, maxLen - strRight.length - 1) + " " + strRight + "\n";
-    return strLeft + " ".repeat(spaceCount) + strRight + "\n";
-}
-// Mengubah Canvas menjadi kode biner ESC/POS (GS v 0)
-function canvasToEscPos(canvas) {
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    
-    // Printer 58mm umumnya memiliki lebar 384 dot (titik)
-    const printWidth = 384; 
-    const scale = printWidth / canvas.width;
-    const printHeight = Math.floor(canvas.height * scale);
-    
-    // Buat canvas sementara untuk resize ke 384px
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = printWidth;
-    tempCanvas.height = printHeight;
-    const tempCtx = tempCanvas.getContext('2d');
-    
-    // Gambar ulang dengan latar putih (agar transparan tidak jadi hitam)
-    tempCtx.fillStyle = '#FFFFFF';
-    tempCtx.fillRect(0, 0, printWidth, printHeight);
-    tempCtx.drawImage(canvas, 0, 0, printWidth, printHeight);
-    
-    const imgData = tempCtx.getImageData(0, 0, printWidth, printHeight).data;
-    
-    // Printer membutuhkan lebar dalam satuan byte (1 byte = 8 pixel)
-    const bytesWidth = Math.ceil(printWidth / 8);
-    const data = new Uint8Array(bytesWidth * printHeight);
-    
-    for (let y = 0; y < printHeight; y++) {
-        for (let x = 0; x < printWidth; x++) {
-            const idx = (y * printWidth + x) * 4;
-            const r = imgData[idx];
-            const g = imgData[idx + 1];
-            const b = imgData[idx + 2];
-            
-            // Konversi ke Grayscale dan Threshold (Di bawah 128 = Hitam)
-            const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
-            const isBlack = brightness < 128;
-            
-            if (isBlack) {
-                const byteIdx = y * bytesWidth + Math.floor(x / 8);
-                const bitIdx = 7 - (x % 8);
-                data[byteIdx] |= (1 << bitIdx); // Set bit menjadi 1 (Hitam)
-            }
+        function formatLR(left, right) {
+            const maxLen = 32;
+            const strLeft = String(left);
+            const strRight = String(right);
+            const spaceCount = maxLen - strLeft.length - strRight.length;
+            if (spaceCount <= 0) return strLeft.substring(0, maxLen - strRight.length - 1) + " " + strRight + "\n";
+            return strLeft + " ".repeat(spaceCount) + strRight + "\n";
         }
-    }
-    
-    // Header instruksi ESC/POS untuk gambar (GS v 0)
-    const header = new Uint8Array([
-        0x1D, 0x76, 0x30, 0x00,
-        bytesWidth & 0xFF, (bytesWidth >> 8) & 0xFF,
-        printHeight & 0xFF, (printHeight >> 8) & 0xFF
-    ]);
-    
-    return new Uint8Array([...header, ...data, 0x0A, 0x0A, 0x0A]);
-}
-async function handlePrint() {
-    try {
-        let finalDataByte;
 
-        // ROUTE 1: Jika yang dicetak adalah Gambar
-        if (state.transactionType === 'gambar') {
-            const imgElement = document.querySelector('#printable-receipt img');
-            if (!imgElement) {
-                alert("Harap unggah gambar terlebih dahulu!");
-                return;
-            }
+        function canvasToEscPos(canvas) {
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const printWidth = 384; 
+            const scale = printWidth / canvas.width;
+            const printHeight = Math.floor(canvas.height * scale);
             
-            // Buat canvas dari gambar yang diunggah
-            const canvas = document.createElement('canvas');
-            canvas.width = imgElement.naturalWidth;
-            canvas.height = imgElement.naturalHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(imgElement, 0, 0);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = printWidth;
+            tempCanvas.height = printHeight;
+            const tempCtx = tempCanvas.getContext('2d');
             
-            // Konversi gambar ke biner printer
-            finalDataByte = canvasToEscPos(canvas);
-        } 
-        // ROUTE 2: Jika yang dicetak adalah Teks Struk Biasa
-        else {
-            let bytes = [];
-            const addBytes = (arr) => bytes.push(...arr);
-            const addText = (text) => addBytes(new TextEncoder().encode(text));
+            tempCtx.fillStyle = '#FFFFFF';
+            tempCtx.fillRect(0, 0, printWidth, printHeight);
+            tempCtx.drawImage(canvas, 0, 0, printWidth, printHeight);
             
-            // Kamus Perintah Mesin Printer
-            const INIT = [0x1B, 0x40];
-            const ALIGN_LEFT = [0x1B, 0x61, 0x00];
-            const ALIGN_CENTER = [0x1B, 0x61, 0x01];
-            const BOLD_ON = [0x1B, 0x45, 0x01];
-            const BOLD_OFF = [0x1B, 0x45, 0x00];
-            const ITALIC_ON = [0x1B, 0x34]; 
-            const ITALIC_OFF = [0x1B, 0x35];
+            const imgData = tempCtx.getImageData(0, 0, printWidth, printHeight).data;
+            const bytesWidth = Math.ceil(printWidth / 8);
+            const data = new Uint8Array(bytesWidth * printHeight);
             
-            const separator = "--------------------------------\n";
-            
-            // --- AWAL STRUK ---
-            addBytes(INIT);
-
-            // HEADER (Tengah & Tebal)
-            addBytes(ALIGN_CENTER);
-            addBytes(BOLD_ON);
-            addText(state.title + "\n");
-            addBytes(BOLD_OFF);
-            addText(state.date + "\n");
-            addText(separator);
-
-            // BODY (Kiri)
-            addBytes(ALIGN_LEFT);
-            let teksBody = "";
-            
-            if (state.transactionType === 'pln') {
-                teksBody += formatLR("NO METER", state.noMeter);
-                teksBody += formatLR("NAMA", state.nama);
-                teksBody += formatLR("TARIF/DAYA", state.tarifDaya);
-                teksBody += formatLR("NO REF", state.noRef);
-                teksBody += separator;
-                teksBody += formatLR("BIAYA ADMIN", "Rp " + state.biayaAdmin.toLocaleString('id-ID'));
-                teksBody += formatLR("RP STROOM", "Rp " + state.rpStroom.toLocaleString('id-ID'));
-                teksBody += separator;
-                teksBody += formatLR("TOTAL BAYAR", "Rp " + state.rpBayar.toLocaleString('id-ID'));
-                teksBody += "\n";
-            } 
-            else if (state.transactionType === 'pulsa') {
-                teksBody += formatLR("NO HP", state.noHp);
-                teksBody += formatLR("PRODUK", state.produk);
-                teksBody += formatLR("NO REF", state.noRef);
-                teksBody += formatLR("SN/KET", state.sn);
-                teksBody += separator;
-                teksBody += formatLR("TOTAL BAYAR", "Rp " + state.rpBayar.toLocaleString('id-ID'));
-            }
-            else if (state.transactionType === 'transfer') {
-                teksBody += formatLR("DARI", state.bankPengirim);
-                teksBody += formatLR("PENGIRIM", state.pengirim);
-                teksBody += formatLR("KE BANK", state.bankTujuan);
-                teksBody += formatLR("REK TUJUAN", state.rekTujuan);
-                teksBody += formatLR("PENERIMA", state.namaPenerima);
-                teksBody += separator;
-                teksBody += formatLR("NOMINAL TRF", "Rp " + state.nominalTransfer.toLocaleString('id-ID'));
-                teksBody += formatLR("BIAYA ADMIN", "Rp " + state.biayaAdmin.toLocaleString('id-ID'));
-                teksBody += separator;
-                teksBody += formatLR("TOTAL BAYAR", "Rp " + state.rpBayar.toLocaleString('id-ID'));
-            }
-            else {
-                teksBody += formatLR("PRODUK", state.tagihanType);
-                teksBody += formatLR("ID/VA", state.tagihanId);
-                teksBody += formatLR("NAMA", state.tagihanNama);
-                teksBody += separator;
-                teksBody += formatLR("TAGIHAN", "Rp " + state.tagihanPokok.toLocaleString('id-ID'));
-                teksBody += formatLR("ADMIN", "Rp " + state.biayaAdmin.toLocaleString('id-ID'));
-                teksBody += separator;
-                teksBody += formatLR("TOTAL BAYAR", "Rp " + state.rpBayar.toLocaleString('id-ID'));
-            }
-            
-            addText(teksBody);
-
-            // KHUSUS PLN TOKEN (Tengah & Tebal)
-            if (state.transactionType === 'pln') {
-                addBytes(ALIGN_CENTER);
-                addBytes(BOLD_ON);
-                addText("STROOM / TOKEN\n");
-                addText(state.stroomToken + "\n\n");
-                addBytes(BOLD_OFF);
-            }
-
-            // FOOTER (Tengah & Miring)
-            addBytes(ALIGN_CENTER);
-            addBytes(ITALIC_ON);
-            addText("\nTERIMA KASIH\nSimpan struk ini sebagai bukti\npembayaran yang sah.\n\n\n\n");
-            addBytes(ITALIC_OFF);
-            
-            // Kemas Semua Instruksi (Menghapus const yang membuat error)
-            finalDataByte = new Uint8Array(bytes);
-        } // <-- INI ADALAH KURUNG KURAWAL YANG HILANG SEBELUMNYA
-
-        // 2. Eksekusi Pengiriman Web Bluetooth Sama untuk Gambar & Teks
-        const btn = document.querySelector('button[onclick="handlePrint()"]');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Mencari...`;
-        
-        const device = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '49535343-fe7d-4ae5-8fa9-9fafd205e455']
-        });
-
-        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menghubungkan...`;
-        const server = await device.gatt.connect();
-        const services = await server.getPrimaryServices();
-        
-        let characteristic;
-        for (const service of services) {
-            const characteristics = await service.getCharacteristics();
-            for (const char of characteristics) {
-                if (char.properties.write || char.properties.writeWithoutResponse) {
-                    characteristic = char;
-                    break;
+            for (let y = 0; y < printHeight; y++) {
+                for (let x = 0; x < printWidth; x++) {
+                    const idx = (y * printWidth + x) * 4;
+                    const r = imgData[idx];
+                    const g = imgData[idx + 1];
+                    const b = imgData[idx + 2];
+                    
+                    const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+                    const isBlack = brightness < 128;
+                    
+                    if (isBlack) {
+                        const byteIdx = y * bytesWidth + Math.floor(x / 8);
+                        const bitIdx = 7 - (x % 8);
+                        data[byteIdx] |= (1 << bitIdx);
+                    }
                 }
             }
-            if (characteristic) break;
+            
+            const header = new Uint8Array([
+                0x1D, 0x76, 0x30, 0x00,
+                bytesWidth & 0xFF, (bytesWidth >> 8) & 0xFF,
+                printHeight & 0xFF, (printHeight >> 8) & 0xFF
+            ]);
+            
+            return new Uint8Array([...header, ...data, 0x0A, 0x0A, 0x0A]);
         }
 
-        if (!characteristic) throw new Error("Printer tidak mendukung Write Characteristic.");
+        async function handlePrint() {
+            try {
+                let finalDataByte;
 
-        btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Mencetak...`;
+                if (state.transactionType === 'gambar') {
+                    const imgElement = document.querySelector('#printable-receipt img');
+                    if (!imgElement) {
+                        alert("Harap unggah gambar terlebih dahulu!");
+                        return;
+                    }
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = imgElement.naturalWidth;
+                    canvas.height = imgElement.naturalHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(imgElement, 0, 0);
+                    
+                    finalDataByte = canvasToEscPos(canvas);
+                } 
+                else {
+                    let bytes = [];
+                    const addBytes = (arr) => bytes.push(...arr);
+                    const addText = (text) => addBytes(new TextEncoder().encode(text));
+                    
+                    const INIT = [0x1B, 0x40];
+                    const ALIGN_LEFT = [0x1B, 0x61, 0x00];
+                    const ALIGN_CENTER = [0x1B, 0x61, 0x01];
+                    const BOLD_ON = [0x1B, 0x45, 0x01];
+                    const BOLD_OFF = [0x1B, 0x45, 0x00];
+                    const ITALIC_ON = [0x1B, 0x34]; 
+                    const ITALIC_OFF = [0x1B, 0x35];
+                    
+                    const separator = "--------------------------------\n";
+                    
+                    addBytes(INIT);
+                    addBytes(ALIGN_CENTER);
+                    addBytes(BOLD_ON);
+                    addText(state.title + "\n");
+                    addBytes(BOLD_OFF);
+                    addText(state.date + "\n");
+                    addText(separator);
 
-        // Chunking (Pecah data menjadi 20-50 byte per pengiriman agar printer tidak hang)
-        const chunkSize = 40; 
-        for (let i = 0; i < finalDataByte.length; i += chunkSize) {
-            const chunk = finalDataByte.slice(i, i + chunkSize);
-            await characteristic.writeValue(chunk);
-            await new Promise(resolve => setTimeout(resolve, 10)); 
+                    addBytes(ALIGN_LEFT);
+                    let teksBody = "";
+                    
+                    if (state.transactionType === 'pln') {
+                        teksBody += formatLR("NO METER", state.noMeter);
+                        teksBody += formatLR("NAMA", state.nama);
+                        teksBody += formatLR("TARIF/DAYA", state.tarifDaya);
+                        teksBody += formatLR("NO REF", state.noRef);
+                        teksBody += separator;
+                        teksBody += formatLR("BIAYA ADMIN", "Rp " + state.biayaAdmin.toLocaleString('id-ID'));
+                        teksBody += formatLR("RP STROOM", "Rp " + state.rpStroom.toLocaleString('id-ID'));
+                        teksBody += separator;
+                        teksBody += formatLR("TOTAL BAYAR", "Rp " + state.rpBayar.toLocaleString('id-ID'));
+                        teksBody += "\n";
+                    } 
+                    else if (state.transactionType === 'pulsa') {
+                        teksBody += formatLR("NO HP", state.noHp);
+                        teksBody += formatLR("PRODUK", state.produk);
+                        teksBody += formatLR("NO REF", state.noRef);
+                        teksBody += formatLR("SN/KET", state.sn);
+                        teksBody += separator;
+                        teksBody += formatLR("TOTAL BAYAR", "Rp " + state.rpBayar.toLocaleString('id-ID'));
+                    }
+                    else if (state.transactionType === 'transfer') {
+                        teksBody += formatLR("DARI", state.bankPengirim);
+                        teksBody += formatLR("PENGIRIM", state.pengirim);
+                        teksBody += formatLR("KE BANK", state.bankTujuan);
+                        teksBody += formatLR("REK TUJUAN", state.rekTujuan);
+                        teksBody += formatLR("PENERIMA", state.namaPenerima);
+                        teksBody += separator;
+                        teksBody += formatLR("NOMINAL TRF", "Rp " + state.nominalTransfer.toLocaleString('id-ID'));
+                        teksBody += formatLR("BIAYA ADMIN", "Rp " + state.biayaAdmin.toLocaleString('id-ID'));
+                        teksBody += separator;
+                        teksBody += formatLR("TOTAL BAYAR", "Rp " + state.rpBayar.toLocaleString('id-ID'));
+                    }
+                    else {
+                        teksBody += formatLR("PRODUK", state.tagihanType);
+                        teksBody += formatLR("ID/VA", state.tagihanId);
+                        teksBody += formatLR("NAMA", state.tagihanNama);
+                        teksBody += separator;
+                        teksBody += formatLR("TAGIHAN", "Rp " + state.tagihanPokok.toLocaleString('id-ID'));
+                        teksBody += formatLR("ADMIN", "Rp " + state.biayaAdmin.toLocaleString('id-ID'));
+                        teksBody += separator;
+                        teksBody += formatLR("TOTAL BAYAR", "Rp " + state.rpBayar.toLocaleString('id-ID'));
+                    }
+                    
+                    addText(teksBody);
+
+                    if (state.transactionType === 'pln') {
+                        addBytes(ALIGN_CENTER);
+                        addBytes(BOLD_ON);
+                        addText("STROOM / TOKEN\n");
+                        addText(state.stroomToken + "\n\n");
+                        addBytes(BOLD_OFF);
+                    }
+
+                    addBytes(ALIGN_CENTER);
+                    addBytes(ITALIC_ON);
+                    addText("\nTERIMA KASIH\nSimpan struk ini sebagai bukti\npembayaran yang sah.\n\n\n\n");
+                    addBytes(ITALIC_OFF);
+                    
+                    finalDataByte = new Uint8Array(bytes);
+                }
+
+                const btn = document.querySelector('button[onclick="handlePrint()"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Mencari...`;
+                
+                const device = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '49535343-fe7d-4ae5-8fa9-9fafd205e455']
+                });
+
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Menghubungkan...`;
+                const server = await device.gatt.connect();
+                const services = await server.getPrimaryServices();
+                
+                let characteristic;
+                for (const service of services) {
+                    const characteristics = await service.getCharacteristics();
+                    for (const char of characteristics) {
+                        if (char.properties.write || char.properties.writeWithoutResponse) {
+                            characteristic = char;
+                            break;
+                        }
+                    }
+                    if (characteristic) break;
+                }
+
+                if (!characteristic) throw new Error("Printer tidak mendukung Write Characteristic.");
+
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Mencetak...`;
+
+                const chunkSize = 40; 
+                for (let i = 0; i < finalDataByte.length; i += chunkSize) {
+                    const chunk = finalDataByte.slice(i, i + chunkSize);
+                    await characteristic.writeValue(chunk);
+                    await new Promise(resolve => setTimeout(resolve, 10)); 
+                }
+
+                btn.innerHTML = originalText;
+
+            } catch (error) {
+                console.error(error);
+                const btn = document.querySelector('button[onclick="handlePrint()"]');
+                btn.innerHTML = `<i data-lucide="printer" class="w-4 h-4"></i> Cetak Termal`;
+                alert("Pencetakan dibatalkan/gagal: " + error.message);
+            }
         }
 
-        btn.innerHTML = originalText;
-
-    } catch (error) {
-        console.error(error);
-        const btn = document.querySelector('button[onclick="handlePrint()"]');
-        btn.innerHTML = `<i data-lucide="printer" class="w-4 h-4"></i> Cetak Termal`;
-        alert("Pencetakan dibatalkan/gagal: " + error.message);
-    }
-}
-
-        // --- LOGIKA TOMBOL KEMBALI MELAYANG ---
+        // LOGIKA TOMBOL KEMBALI MELAYANG
         document.addEventListener("DOMContentLoaded", () => {
             const fab = document.getElementById('floatingBackBtn');
             const fabContainer = document.getElementById('fabContainer');
@@ -938,7 +927,6 @@ async function handlePrint() {
                 document.addEventListener('mouseup', endDrag);
                 document.addEventListener('touchend', endDrag);
                 
-                // Eksekusi Kembali hanya jika tombol ditekan (bukan digeser)
                 fab.addEventListener('click', (e) => {
                     if (isMoved) {
                         e.preventDefault();

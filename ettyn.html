@@ -20,7 +20,20 @@
                     colors: {
                         krem: '#FAF3E0',
                         pinkmuda: '#F4C2C2',
-                        textgelap: '#4A3B32'
+                        textgelap: '#4A3B32',
+                        // Konfigurasi warna tambahan khusus untuk banner Spesial Anda
+                        pastelPink: {
+                            light: '#FADADD',
+                            DEFAULT: '#F4C2C2',
+                            dark: '#D77A7A'
+                        },
+                        brown: {
+                            DEFAULT: '#6B5B53',
+                            dark: '#4A3B32'
+                        }
+                    },
+                    boxShadow: {
+                        soft: '0 10px 40px -10px rgba(0,0,0,0.08)',
                     }
                 }
             }
@@ -45,6 +58,7 @@
                 </div>
                 <div class="hidden md:flex space-x-6">
                     <a href="#layanan" class="hover:text-pink-custom font-medium transition">Layanan</a>
+                    <a href="#spesial" class="hover:text-pink-custom font-medium transition">Les</a>
                     <a href="#tarif" class="hover:text-pink-custom font-medium transition">Tarif</a>
                     <a href="#syarat" class="hover:text-pink-custom font-medium transition">S&K</a>
                     <a href="#kontak" class="hover:text-pink-custom font-medium transition">Kontak</a>
@@ -67,10 +81,10 @@
         <!-- Social Media Pills -->
         <div class="flex justify-center gap-4 mb-10">
             <a href="#" class="bg-white px-5 py-2 rounded-full shadow hover:shadow-md transition flex items-center gap-2 text-blue-600">
-                <i class="fab fa-facebook text-xl"></i> <span class="font-medium">Ettyn Muda</span>
+                <i class="fab fa-facebook text-xl"></i> <span class="font-medium hidden sm:inline">Etyn Muda</span>
             </a>
             <a href="#" class="bg-white px-5 py-2 rounded-full shadow hover:shadow-md transition flex items-center gap-2 text-pink-600">
-                <i class="fab fa-instagram text-xl"></i> <span class="font-medium">ettyn muda</span>
+                <i class="fab fa-instagram text-xl"></i> <span class="font-medium hidden sm:inline">ettyn muda</span>
             </a>
             <a href="https://wa.me/6281237827324" class="bg-green-500 text-white px-5 py-2 rounded-full shadow hover:bg-green-600 transition flex items-center gap-2">
                 <i class="fab fa-whatsapp text-xl"></i> <span class="font-medium">Hubungi Saya</span>
@@ -86,7 +100,6 @@
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Item Layanan -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-pinkmuda/30 hover:shadow-md transition">
                     <i class="fas fa-file-alt text-3xl text-pink-custom mb-4"></i>
                     <h3 class="font-bold text-lg mb-2">Proposal Skripsi</h3>
@@ -133,13 +146,28 @@
                     <p class="text-sm opacity-80">Penyuntingan paragraf dan revisi berdasarkan laporan similarity.</p>
                 </div>
             </div>
+        </div>
+    </section>
 
-            <!-- Spesial Banner -->
-            <div class="mt-10 bg-pinkmuda p-8 rounded-3xl text-center shadow-sm relative overflow-hidden">
-                <i class="fas fa-laptop-code text-6xl text-white/30 absolute -right-4 -bottom-4"></i>
-                <span class="bg-white px-4 py-1 rounded-full text-sm font-bold text-pink-custom mb-4 inline-block">Spesial</span>
-                <h3 class="text-2xl font-bold mb-2">Les Online</h3>
-                <p class="text-lg">Belajar Microsoft Dasar (Word, Excel, PowerPoint)</p>
+    <!-- Bagian Spesial Banner (Sesuai Desain Anda) -->
+    <section id="spesial" class="py-16 px-6 max-w-5xl mx-auto">
+        <div class="bg-pastelPink/60 rounded-[2.5rem] p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-10 shadow-soft border-2 border-white relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl opacity-60"></div>
+            
+            <div class="flex-1 relative z-10 text-center md:text-left">
+                <div class="inline-block bg-white px-5 py-2 rounded-full text-sm font-bold text-pastelPink-dark mb-4 shadow-sm border border-pastelPink-light">
+                    🌟 Layanan Spesial!
+                </div>
+                <h3 class="text-3xl md:text-4xl font-bold mb-4 leading-tight text-brown-dark">Les Online Belajar<br>Microsoft Dasar</h3>
+                <p class="text-brown text-lg mb-8 max-w-md mx-auto md:mx-0">Kuasai tools esensial agar bisa ngerjain tugas sendiri dengan lebih cepat! Kelas privat yang santai, interaktif, dan mudah dipahami.</p>
+                <a href="https://wa.me/6281237827324?text=Halo%2C%20saya%20tertarik%20dengan%20Les%20Online%20Microsoft%20Dasar" target="_blank" class="inline-block bg-white text-brown-dark font-bold text-lg px-8 py-4 rounded-full hover:bg-brown hover:text-white transition-all shadow-md">
+                    Daftar Les Sekarang
+                </a>
+            </div>
+            
+            <!-- Tambahan Ikon Hiasan -->
+            <div class="relative z-10 hidden md:block">
+                <i class="fas fa-laptop-code text-8xl text-white drop-shadow-md opacity-90"></i>
             </div>
         </div>
     </section>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teman Akademik - Solusi Tugas & Karya Ilmiahmu</title>
+    
+    <!-- Google Fonts: Quicksand for a friendly, rounded aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Custom Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Quicksand', 'sans-serif'],
+                    },
+                    colors: {
+                        cream: {
+                            50: '#FFFCF9',
+                            100: '#FAF3E0',
+                            200: '#F2E3C6'
+                        },
+                        pastelPink: {
+                            light: '#FCEAEA',
+                            DEFAULT: '#F4D8D8',
+                            dark: '#E5BDBD'
+                        },
+                        brown: {
+                            light: '#8C7462',
+                            DEFAULT: '#5A4634',
+                            dark: '#382B1F'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(90, 70, 52, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Styles for aesthetic touches */
+        body {
+            background-color: #FAF3E0;
+            background-image: radial-gradient(#F4D8D8 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        .blob-shape {
+            border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
+        }
+        .text-shadow-sm {
+            text-shadow: 1px 1px 2px rgba(244, 216, 216, 0.5);
+        }
+    </style>
+</head>
+<body class="text-brown font-sans antialiased selection:bg-pastelPink selection:text-brown-dark relative">
+
+    <header class="fixed w-full top-0 z-50 bg-cream-100/90 backdrop-blur-sm border-b border-pastelPink/50">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2 cursor-pointer">
+                <div class="relative">
+                    <i class="fa-solid fa-crown text-pastelPink-dark text-xl absolute -top-3 -left-2 rotate-[-20deg]"></i>
+                    <h1 class="text-2xl font-bold tracking-tight text-brown-dark">Teman Akademik</h1>
+                </div>
+            </div>
+            <div class="hidden md:flex items-center gap-6 font-semibold">
+                <a href="#layanan" class="hover:text-pastelPink-dark transition-colors">Layanan</a>
+                <a href="#spesial" class="hover:text-pastelPink-dark transition-colors">Promo</a>
+                <a href="#kenapa-kami" class="hover:text-pastelPink-dark transition-colors">Tentang</a>
+                <a href="https://wa.me/6281237827324" target="_blank" class="bg-pastelPink text-brown-dark px-5 py-2 rounded-full hover:bg-pastelPink-dark hover:text-white transition-all shadow-sm">Hubungi Kami</a>
+            </div>
+            <!-- Mobile Menu Icon -->
+            <button class="md:hidden text-2xl text-brown">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <section class="pt-32 pb-20 px-6 max-w-6xl mx-auto flex flex-col-reverse md:flex-row items-center gap-12">
+        <div class="flex-1 text-center md:text-left">
+            <div class="inline-block bg-pastelPink-light px-4 py-1.5 rounded-full text-sm font-bold text-brown-light mb-4 border border-pastelPink">
+                ✨ Solusi Tugas & Karya Ilmiahmu
+            </div>
+            <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight text-brown-dark text-shadow-sm">
+                Tugas Numpuk? <br> 
+                Biar <span class="relative inline-block">
+                    Kami
+                    <span class="absolute bottom-1 left-0 w-full h-3 bg-pastelPink -z-10 rounded-full opacity-70"></span>
+                </span> yang Bantu!
+            </h2>
+            <p class="text-lg text-brown-light mb-8 max-w-lg mx-auto md:mx-0 leading-relaxed">
+                Fokus pada hal penting lainnya, biar urusan ketik, edit, presentasi, dan riset akademikmu kami selesaikan dengan cepat, rapi, dan profesional.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                <a href="https://wa.me/6281237827324" target="_blank" class="bg-brown text-cream-50 font-bold text-lg px-8 py-4 rounded-full hover:bg-brown-dark hover:-translate-y-1 transition-all shadow-soft flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i> Pesan Sekarang
+                </a>
+                <a href="#layanan" class="bg-white text-brown font-bold text-lg px-8 py-4 rounded-full border-2 border-pastelPink hover:bg-pastelPink-light transition-all flex items-center justify-center gap-2">
+                    Lihat Layanan
+                </a>
+            </div>
+        </div>
+        
+        <div class="flex-1 relative flex flex-col items-center justify-center mt-10 md:mt-0">
+            <!-- Aesthetic Blob Background behind illustration -->
+            <div class="absolute inset-0 bg-pastelPink blob-shape scale-95 opacity-60 z-0"></div>
+            
+            <!-- Profile Image Container -->
+            <div class="relative z-10">
+                <img src="WhatsApp Image 2026-10-11 at 3.06.20 PM (1).jpeg" alt="Etyn Muda" onerror="this.src='https://placehold.co/400x400/F4D8D8/5A4634?text=Etyn+Muda'" class="w-56 h-56 md:w-72 md:h-72 object-cover object-top rounded-full mx-auto shadow-xl border-8 border-white transition-transform hover:scale-105 duration-300">
+                
+                <!-- Floating badge -->
+                <div class="absolute bottom-4 -right-2 md:-right-8 bg-white px-5 py-2.5 rounded-full shadow-lg border-2 border-pastelPink flex items-center gap-2 animate-bounce">
+                    <span class="text-xl">👋</span>
+                    <span class="font-bold text-brown-dark">Hai, Saya Etyn!</span>
+                </div>
+            </div>
+
+            <div class="relative z-10 flex gap-4 mt-8 bg-white/80 backdrop-blur px-6 py-3 rounded-full shadow-sm border border-cream-100">
+                <a href="#" class="text-[#1877F2] hover:scale-125 transition-transform" title="Facebook: Etyn Muda">
+                    <i class="fa-brands fa-facebook text-2xl"></i>
+                </a>
+                <a href="#" class="text-[#E4405F] hover:scale-125 transition-transform" title="Instagram: ettyn muda">
+                    <i class="fa-brands fa-instagram text-2xl"></i>
+                </a>
+                <a href="https://wa.me/6281237827324" target="_blank" class="text-[#25D366] hover:scale-125 transition-transform" title="WhatsApp: 081237827324">
+                    <i class="fa-brands fa-whatsapp text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section id="layanan" class="py-20 px-6 bg-white/50 backdrop-blur-sm">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl md:text-4xl font-bold mb-4">Melayani Jasa</h3>
+                <div class="h-1.5 w-24 bg-pastelPink mx-auto rounded-full"></div>
+            </div>
+            
+            <div class="bg-cream-50 p-8 md:p-10 rounded-[2rem] shadow-soft border-2 border-pastelPink/30 relative">
+                <!-- Decorative Elements -->
+                <i class="fa-regular fa-heart absolute top-8 right-8 text-3xl text-pastelPink-dark opacity-50 rotate-12"></i>
+                <i class="fa-regular fa-star absolute bottom-8 left-8 text-2xl text-brown-light opacity-30 -rotate-12"></i>
+
+                <ul class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-lg font-medium">
+                    <li class="flex items-start gap-4 p-2 hover:bg-pastelPink-light/50 rounded-xl transition-colors">
+                        <div class="mt-1 bg-pastelPink text-brown-dark rounded-full w-6 h-6 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-check text-sm"></i>
+                        </div>
+                        Proposal Skripsi
+                    </li>
+                    <li class="flex items-start gap-4 p-2 hover:bg-pastelPink-light/50 rounded-xl transition-colors">
+                        <div class="mt-1 bg-pastelPink text-brown-dark rounded-full w-6 h-6 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-check text-sm"></i>
+                        </div>
+                        Makalah, PPT
+                    </li>
+                    <li class="flex items-start gap-4 p-2 hover:bg-pastelPink-light/50 rounded-xl transition-colors">
+                        <div class="mt-1 bg-pastelPink text-brown-dark rounded-full w-6 h-6 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-check text-sm"></i>
+                        </div>
+                        Jasa Ketik & Edit Dokumen
+                    </li>
+                    <li class="flex items-start gap-4 p-2 hover:bg-pastelPink-light/50 rounded-xl transition-colors">
+                        <div class="mt-1 bg-pastelPink text-brown-dark rounded-full w-6 h-6 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-check text-sm"></i>
+                        </div>
+                        Artikel (Jurnal, Tugas, dll)
+                    </li>
+                    <li class="flex items-start gap-4 p-2 hover:bg-pastelPink-light/50 rounded-xl transition-colors">
+                        <div class="mt-1 bg-pastelPink text-brown-dark rounded-full w-6 h-6 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-check text-sm"></i>
+                        </div>
+                        Tugas Kuliah & Sekolah
+                    </li>
+                    <li class="flex items-start gap-4 p-2 hover:bg-pastelPink-light/50 rounded-xl transition-colors">
+                        <div class="mt-1 bg-pastelPink text-brown-dark rounded-full w-6 h-6 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-check text-sm"></i>
+                        </div>
+                        Rangkuman Materi
+                    </li>
+                    <li class="flex items-start gap-4 p-2 hover:bg-pastelPink-light/50 rounded-xl transition-colors md:col-span-2">
+                        <div class="mt-1 bg-pastelPink text-brown-dark rounded-full w-6 h-6 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-check text-sm"></i>
+                        </div>
+                        Modul Ajar / Perangkat Pembelajaran
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section id="spesial" class="py-20 px-6 max-w-5xl mx-auto">
+        <div class="bg-pastelPink/40 rounded-[2.5rem] p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-10 shadow-sm border border-pastelPink">
+            <div class="flex-1">
+                <div class="inline-block bg-white px-4 py-1.5 rounded-full text-sm font-bold text-pastelPink-dark mb-4 shadow-sm">
+                    ✨ Penawaran Spesial
+                </div>
+                <h3 class="text-3xl md:text-4xl font-bold mb-4 leading-tight">Les Online Belajar<br>Microsoft Dasar</h3>
+                <p class="text-brown-light text-lg mb-6">Tingkatkan skill digitalmu! Kami menyediakan kelas privat online untuk menguasai tools esensial agar tugasmu makin lancar.</p>
+                <a href="https://wa.me/6281237827324?text=Halo%2C%20saya%20tertarik%20dengan%20Les%20Online%20Microsoft%20Dasar" target="_blank" class="inline-block bg-white text-brown border-2 border-brown font-bold px-6 py-3 rounded-full hover:bg-brown hover:text-white transition-all shadow-sm">
+                    Daftar Les Sekarang
+                </a>
+            </div>
+            
+            <div class="bg-white p-8 rounded-3xl shadow-soft flex items-center justify-center gap-6 rotate-[-2deg] transform hover:rotate-0 transition-transform">
+                <div class="text-center">
+                    <div class="w-16 h-16 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center text-4xl mb-2 shadow-sm">
+                        <i class="fa-solid fa-file-word"></i>
+                    </div>
+                    <span class="font-bold text-sm">Word</span>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center text-4xl mb-2 shadow-sm">
+                        <i class="fa-solid fa-file-powerpoint"></i>
+                    </div>
+                    <span class="font-bold text-sm">PPT</span>
+                </div>
+                <div class="text-center">
+                    <div class="w-16 h-16 rounded-2xl bg-green-100 text-green-600 flex items-center justify-center text-4xl mb-2 shadow-sm">
+                        <i class="fa-solid fa-file-excel"></i>
+                    </div>
+                    <span class="font-bold text-sm">Excel</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="kenapa-kami" class="py-20 px-6 bg-white/50 backdrop-blur-sm border-t border-pastelPink/30">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-12">
+                <h3 class="text-3xl font-bold mb-4">Kenapa Memilih Kami?</h3>
+                <div class="h-1.5 w-24 bg-pastelPink mx-auto rounded-full"></div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="bg-cream-50 p-8 rounded-3xl text-center shadow-sm border border-pastelPink/40 hover:-translate-y-2 transition-transform">
+                    <div class="w-16 h-16 mx-auto bg-pastelPink rounded-2xl flex items-center justify-center text-3xl mb-6 text-brown-dark shadow-sm">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-3">Fast Respon</h4>
+                    <p class="text-brown-light">Kami memahami tenggat waktu Anda. Pesan akan dibalas secepat mungkin dan pengerjaan dilakukan tepat waktu.</p>
+                </div>
+                
+                <!-- Feature 2 -->
+                <div class="bg-cream-50 p-8 rounded-3xl text-center shadow-sm border border-pastelPink/40 hover:-translate-y-2 transition-transform">
+                    <div class="w-16 h-16 mx-auto bg-pastelPink rounded-2xl flex items-center justify-center text-3xl mb-6 text-brown-dark shadow-sm">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-3">Hasil Rapi & Sesuai</h4>
+                    <p class="text-brown-light">Dikerjakan dengan teliti memperhatikan standar penulisan akademik yang berlaku serta revisi jika diperlukan.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="bg-cream-50 p-8 rounded-3xl text-center shadow-sm border border-pastelPink/40 hover:-translate-y-2 transition-transform">
+                    <div class="w-16 h-16 mx-auto bg-pastelPink rounded-2xl flex items-center justify-center text-3xl mb-6 text-brown-dark shadow-sm">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-3">Harga Pelajar</h4>
+                    <p class="text-brown-light">Tarif bersahabat yang disesuaikan dengan kantong pelajar dan mahasiswa tanpa mengorbankan kualitas.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-brown-dark text-cream-50 pt-16 pb-8 px-6 rounded-t-[3rem] mt-10">
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10 border-b border-brown-light/30 pb-10">
+            
+            <div class="text-center md:text-left">
+                <div class="flex items-center gap-2 justify-center md:justify-start mb-4">
+                    <i class="fa-solid fa-crown text-pastelPink text-2xl rotate-[-15deg]"></i>
+                    <h2 class="text-3xl font-bold">Teman Akademik</h2>
+                </div>
+                <p class="text-cream-200 mb-2">Solusi Tugas & Karya Ilmiahmu</p>
+            </div>
+
+            <div class="bg-brown p-6 rounded-3xl text-center min-w-[250px] shadow-lg border border-brown-light/20 relative overflow-hidden">
+                <div class="absolute -top-4 -right-4 w-12 h-12 bg-pastelPink rounded-full opacity-20"></div>
+                <h4 class="text-pastelPink font-bold text-lg mb-4">Hubungi Saya:</h4>
+                <div class="space-y-4">
+                    <a href="#" class="flex items-center gap-3 hover:text-pastelPink transition-colors">
+                        <i class="fa-brands fa-facebook text-xl w-6"></i> Etyn Muda
+                    </a>
+                    <a href="#" class="flex items-center gap-3 hover:text-pastelPink transition-colors">
+                        <i class="fa-brands fa-instagram text-xl w-6"></i> @ettyn_muda
+                    </a>
+                    <a href="https://wa.me/6281237827324" target="_blank" class="flex items-center gap-3 hover:text-pastelPink transition-colors">
+                        <i class="fa-brands fa-whatsapp text-xl w-6"></i> 081237827324
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center text-sm text-brown-light mt-8">
+            &copy; 2026 Teman Akademik. All rights reserved.
+        </div>
+    </footer>
+
+    <a href="https://wa.me/6281237827324" target="_blank" aria-label="Chat WhatsApp" class="fixed bottom-6 right-6 bg-[#25D366] text-white w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-[0_4px_14px_0_rgba(37,211,102,0.39)] hover:bg-[#128C7E] hover:scale-110 transition-all z-50 animate-bounce">
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
+
+</body>
+</html>
